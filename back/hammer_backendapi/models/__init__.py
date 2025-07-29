@@ -1,1 +1,2 @@
-from .models import Teacher, Student
+from .models import Teacher, Student, Organization
+

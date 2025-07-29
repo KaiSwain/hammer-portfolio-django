@@ -1,56 +1,62 @@
 "use client";
-import { useRouter } from "next/navigation";
-import React, { useRef, useState } from "react";
+
+
+import React, { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 
 export default function Login() {
-  const [email, setEmail] = useState("kai@kai.com");
-  const [password, setPassword] = useState("kai");
-  const existDialog = useRef();
-  const router = useRouter();
+  const [email, setEmail] = useState("test@test.com");
+  const [password, setPassword] = useState("iamtestingthisout");
+  const dialogRef = useRef();
+  const router = useRouter()
 
-//   const handleLogin = (e) => {
-//     e.preventDefault();
-//     fetch(`http://localhost:8000/login`, {
-//       method: "POST",
-//       body: JSON.stringify({ email, password }),
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//     })
-//       .then((res) => res.json())
-//       .then((authInfo) => {
-//         if (authInfo.valid) {
-//           localStorage.setItem("game_token", JSON.stringify(authInfo));
-//           router.push("/");
-//           window.dispatchEvent(new Event("logged in"));
-//         } else {
-//           existDialog.current.showModal();
-//         }
-//       });
-//   };
+  const handleLogin = (e) => {
+    e.preventDefault();
+    fetch(`http://localhost:8000/login`, {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((authInfo) => {
+        if (authInfo.valid) {
+          localStorage.setItem("token", JSON.stringify(authInfo));
+          router.push("/students");
+        } else {
+          existDialog.current.showModal();
+        }
+      });
+  };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-10 text-white">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      {/* Error Dialog */}
       <dialog
-        className="bg-zinc-900 rounded-md p-6 text-white"
-        ref={existDialog}
+        className="bg-white shadow-lg rounded-lg p-6 text-gray-800"
+        ref={dialogRef}
       >
-        <div className="text-pink-400 font-semibold">User does not exist.</div>
+        <div className="text-red-500 font-semibold mb-2">
+          Invalid credentials or user not found.
+        </div>
         <button
-          className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded"
-          onClick={() => existDialog.current.close()}
+          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+          onClick={() => dialogRef.current.close()}
         >
           Close
         </button>
       </dialog>
 
-      <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-white/10 w-full max-w-md">
-        <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-yellow-400 text-center mb-6">
-          🔐 Sign In to Flip Quest
+      {/* Login Card */}
+      <div className="bg-white p-8 rounded-lg shadow-xl border border-gray-200 w-full max-w-md">
+        <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
+          Hammer Portal Login
         </h1>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5 text-black ">
           <Input
             label="Email Address"
             value={email}
@@ -66,18 +72,17 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-2 bg-blue-700 hover:bg-blue-800 transition rounded font-semibold"
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition"
           >
             Sign In
           </button>
 
-          <p className="text-center text-sm text-gray-400 mt-4">
-            New here?{" "}
+          <p className="text-center text-sm text-gray-500 mt-3">
             <Link
-              href="/register"
-              className="text-pink-400 hover:text-pink-300 underline"
+              href="/support"
+              className="text-blue-600 hover:underline"
             >
-              Create an account
+              Report a login issue
             </Link>
           </p>
         </form>
@@ -86,17 +91,18 @@ export default function Login() {
   );
 }
 
+// Input Component
 function Input({ label, value, setValue, type = "text" }) {
   return (
     <div>
-      <label className="block mb-1 text-sm font-semibold text-gray-200">
+      <label className="block mb-1 text-sm font-medium text-gray-700">
         {label}
       </label>
       <input
         type={type}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full px-3 py-2 bg-zinc-800 border border-white/10 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
+        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
     </div>

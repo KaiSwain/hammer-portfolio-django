@@ -2,7 +2,16 @@ from django.contrib import admin, messages
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from rest_framework.authtoken.models import Token
-from .models import Teacher, Student, Organization
+from .models import (
+    Teacher,
+    Student,
+    Organization,
+    GenderIdentity,
+    DiscAssessment,
+    SixteenTypeAssessment,
+    EnneagramResult,
+    OshaType
+)
 
 # -------------------------
 # Teacher Admin
@@ -13,7 +22,7 @@ class TeacherAdmin(admin.ModelAdmin):
     search_fields = ('full_name', 'email')
     list_filter = ('organization',)
     exclude = ('user',)
-    
+
     def save_model(self, request, obj, form, change):
         """
         When saving a Teacher:
@@ -51,9 +60,10 @@ class TeacherAdmin(admin.ModelAdmin):
 # -------------------------
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'teacher', 'start_date', 'end_date', 'created_at')
+    list_display = ('full_name', 'teacher', 'gender_identity', 'start_date', 'end_date', 'created_at')
     search_fields = ('full_name',)
-    list_filter = ('teacher', 'start_date', 'end_date')
+    list_filter = ('teacher', 'gender_identity', 'start_date', 'end_date')
+    autocomplete_fields = ('teacher', 'gender_identity', 'disc_assessment_type', 'sixteen_types_assessment', 'enneagram_result')
 
 
 # -------------------------
@@ -63,4 +73,37 @@ class StudentAdmin(admin.ModelAdmin):
 class OrganizationAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+
+# -------------------------
+# Lookup Models
+# -------------------------
+@admin.register(GenderIdentity)
+class GenderIdentityAdmin(admin.ModelAdmin):
+    list_display = ('gender',)
+    search_fields = ('gender',)
+
+
+@admin.register(DiscAssessment)
+class DiscAssessmentAdmin(admin.ModelAdmin):
+    list_display = ('type_name',)
+    search_fields = ('type_name',)
+
+
+@admin.register(SixteenTypeAssessment)
+class SixteenTypeAssessmentAdmin(admin.ModelAdmin):
+    list_display = ('type_name',)
+    search_fields = ('type_name',)
+
+
+@admin.register(EnneagramResult)
+class EnneagramResultAdmin(admin.ModelAdmin):
+    list_display = ('result_name',)
+    search_fields = ('result_name',)
+
+@admin.register(OshaType)
+class OshaTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
     

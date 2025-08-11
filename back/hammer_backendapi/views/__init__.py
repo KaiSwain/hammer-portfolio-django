@@ -1,4 +1,4 @@
 from .auth import login_user
-from .students import StudentView
+from .students import StudentViewSet
 from .details import StudentForeignKeyOptionsView
 from .certificates import generate_certificate_pdf, generate_employability_certificate, generate_hammermath_certificate, generate_nccer_certificate, generate_osha_certificate, generate_portfolio_certificate, generate_workforce_certificate

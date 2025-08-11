@@ -112,21 +112,21 @@ export default function EditStudentPage() {
       // coerce blanks to null for FKs + numbers
       const payload = {
         full_name: formData.full_name,
-        gender_identity: Number(formData.gender_identity) || null,
+        gender_identity_id: Number(formData.gender_identity) || null,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
         complete_50_hour_training: !!formData.complete_50_hour_training,
         passed_osha_10_exam: !!formData.passed_osha_10_exam,
         osha_completion_date: formData.osha_completion_date || null,
-        osha_type: Number(formData.osha_type) || null,
+        osha_type_id: Number(formData.osha_type) || null,
         hammer_math: !!formData.hammer_math,
         employability_skills: !!formData.employability_skills,
         passed_ruler_assessment: !!formData.passed_ruler_assessment,
         pretest_score: formData.pretest_score === "" ? null : Number(formData.pretest_score),
         posttest_score: formData.posttest_score === "" ? null : Number(formData.posttest_score),
-        disc_assessment_type: Number(formData.disc_assessment_type) || null,
-        sixteen_types_assessment: Number(formData.sixteen_types_assessment) || null,
-        enneagram_result: Number(formData.enneagram_result) || null,
+        disc_assessment_type_id: Number(formData.disc_assessment_type) || null,
+        sixteen_types_assessment_id: Number(formData.sixteen_types_assessment) || null,
+        enneagram_result_id: Number(formData.enneagram_result) || null,
       };
 
       await editStudent(payload, id); // expects PATCH in service for partial, or PUT with partial=True on server

@@ -18,40 +18,33 @@ from .models import (
 # -------------------------
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'email', 'organization', 'user')
-    search_fields = ('full_name', 'email')
+    list_display = ('id', 'full_name', 'email', 'organization', 'user_id')  # show IDs
+    search_fields = ('id', 'full_name', 'email')
     list_filter = ('organization',)
     exclude = ('user',)
+    readonly_fields = ('id',)  # show ID on form as read-only
+    ordering = ('id',)
+
+    def user_id(self, obj):
+        return obj.user_id
+    user_id.short_description = "User ID"
 
     def save_model(self, request, obj, form, change):
-        """
-        When saving a Teacher:
-        - If no linked User exists, create one automatically.
-        - Assign an auth token to that user.
-        """
         if not obj.user:
-            # Generate random password if teacher.password is blank
             raw_password = obj.password if obj.password else get_random_string(10)
-
-            # Create linked Django user
             user = User.objects.create_user(
                 username=obj.email,
                 email=obj.email,
                 password=raw_password
             )
             obj.user = user
-
-            # Create an API Token for the user
             token, created = Token.objects.get_or_create(user=user)
-
-            # Show credentials in Django Admin success message
             messages.add_message(
                 request,
                 messages.SUCCESS,
                 f"✅ Teacher '{obj.full_name}' created. "
                 f"Login: {obj.email} | Password: {raw_password} | Token: {token.key}"
             )
-
         super().save_model(request, obj, form, change)
 
 
@@ -60,10 +53,33 @@ class TeacherAdmin(admin.ModelAdmin):
 # -------------------------
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'teacher', 'gender_identity', 'start_date', 'end_date', 'created_at')
-    search_fields = ('full_name',)
-    list_filter = ('teacher', 'gender_identity', 'start_date', 'end_date')
-    autocomplete_fields = ('teacher', 'gender_identity', 'disc_assessment_type', 'sixteen_types_assessment', 'enneagram_result')
+    # show ID + raw FK IDs alongside human names
+    list_display = (
+        'id',
+        'full_name',
+        'teacher', 'teacher_id',
+        'gender_identity', 'gender_identity_id',
+        'disc_assessment_type', 'disc_assessment_type_id',
+        'sixteen_types_assessment', 'sixteen_types_assessment_id',
+        'enneagram_result', 'enneagram_result_id',
+        'osha_type', 'osha_type_id',
+        'start_date', 'end_date',
+        'created_at',
+    )
+    search_fields = (
+        'id', 'full_name',
+        'teacher__full_name',
+        'gender_identity__gender',
+        'disc_assessment_type__type_name',
+        'sixteen_types_assessment__type_name',
+        'enneagram_result__result_name',
+        'osha_type__name',
+    )
+    list_filter = ('teacher', 'gender_identity', 'start_date', 'end_date', 'created_at')
+    autocomplete_fields = ('teacher', 'gender_identity', 'disc_assessment_type',
+                           'sixteen_types_assessment', 'enneagram_result', 'osha_type')
+    readonly_fields = ('id',)
+    ordering = ('id',)
 
 
 # -------------------------
@@ -71,8 +87,10 @@ class StudentAdmin(admin.ModelAdmin):
 # -------------------------
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
+    list_display = ('id', 'name')
+    search_fields = ('id', 'name')
+    readonly_fields = ('id',)
+    ordering = ('id',)
 
 
 # -------------------------
@@ -80,30 +98,40 @@ class OrganizationAdmin(admin.ModelAdmin):
 # -------------------------
 @admin.register(GenderIdentity)
 class GenderIdentityAdmin(admin.ModelAdmin):
-    list_display = ('gender',)
-    search_fields = ('gender',)
+    list_display = ('id', 'gender')
+    search_fields = ('id', 'gender')
+    readonly_fields = ('id',)
+    ordering = ('id',)
 
 
 @admin.register(DiscAssessment)
 class DiscAssessmentAdmin(admin.ModelAdmin):
-    list_display = ('type_name',)
-    search_fields = ('type_name',)
+    list_display = ('id', 'type_name')
+    search_fields = ('id', 'type_name')
+    readonly_fields = ('id',)
+    ordering = ('id',)
 
 
 @admin.register(SixteenTypeAssessment)
 class SixteenTypeAssessmentAdmin(admin.ModelAdmin):
-    list_display = ('type_name',)
-    search_fields = ('type_name',)
+    list_display = ('id', 'type_name')
+    search_fields = ('id', 'type_name')
+    readonly_fields = ('id',)
+    ordering = ('id',)
 
 
 @admin.register(EnneagramResult)
 class EnneagramResultAdmin(admin.ModelAdmin):
-    list_display = ('result_name',)
-    search_fields = ('result_name',)
+    list_display = ('id', 'result_name')
+    search_fields = ('id', 'result_name')
+    readonly_fields = ('id',)
+    ordering = ('id',)
+
 
 @admin.register(OshaType)
 class OshaTypeAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
+    list_display = ('id', 'name')
+    search_fields = ('id', 'name')
+    readonly_fields = ('id',)
+    ordering = ('id',)
     

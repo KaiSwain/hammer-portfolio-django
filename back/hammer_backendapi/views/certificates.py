@@ -47,9 +47,9 @@ def generate_portfolio_certificate(request):
 
         # 4) Build the fields list for your PDF drawer
         fields = [
-            {"text": disc_text,     "coords": (510, 560), "align": "center", "fontsize": 16, "color": (0, 0, 0)},
-            {"text": sixteen_text,  "coords": (510, 620), "align": "center", "fontsize": 16, "color": (0, 0, 0)},
-            {"text": enneagram_text,"coords": (510, 675), "align": "center", "fontsize": 16, "color": (0, 0, 0)},
+            {"text": disc_text,     "coords": (510, 560), "align": "center", "fontsize": 10, "color": (0, 0, 0)},
+            {"text": sixteen_text,  "coords": (510, 620), "align": "center", "fontsize": 10, "color": (0, 0, 0)},
+            {"text": enneagram_text,"coords": (510, 675), "align": "center", "fontsize": 10, "color": (0, 0, 0)},
         ]
 
         # 5) Generate and return the PDF
@@ -70,14 +70,14 @@ def generate_nccer_certificate(request):
         data = json.loads(request.body)
         student = data.get("student", {})
         full_name = student.get("full_name", "")
-        date = student.get("date", "")
+        date = student.get("end_date", "")
 
         fields = [
             {
                 "text": full_name,
                 "coords": (400, 275),
                 "align": "center",
-                "fontsize": 18,
+                "fontsize": 30,
                 "color": (1, 0, 0),
             },  # red
             {
@@ -115,7 +115,7 @@ def generate_osha_certificate(request):
                 "text": full_name,
                 "coords": (450, 290),
                 "align": "center",
-                "fontsize": 18,
+                "fontsize": 40,
                 "color": (1, 0, 0),
             },
             {
@@ -146,14 +146,14 @@ def generate_hammermath_certificate(request):
         data = json.loads(request.body)
         student = data.get("student", {})
         full_name = student.get("full_name", "")
-        date = student.get("date", "")
+        date = student.get("end_date", "")
 
         fields = [
             {
                 "text": full_name,
                 "coords": (385, 375),
                 "align": "center",
-                "fontsize": 18,
+                "fontsize": 30,
                 "color": (1, 0, 0),
             },
             {
@@ -183,14 +183,14 @@ def generate_employability_certificate(request):
         data = json.loads(request.body)
         student = data.get("student", {})
         full_name = student.get("full_name", "")
-        date = student.get("date", "")
+        date = student.get("end_date", "")
 
         fields = [
             {
                 "text": full_name,
                 "coords": (390, 350),
                 "align": "center",
-                "fontsize": 18,
+                "fontsize": 30,
                 "color": (1, 0, 0),
             },
             {
@@ -220,14 +220,14 @@ def generate_workforce_certificate(request):
         data = json.loads(request.body)
         student = data.get("student", {})
         full_name = student.get("full_name", "")
-        date = student.get("date", "")
+        date = student.get("end_date", "")
 
         fields = [
             {
                 "text": full_name,
                 "coords": (450, 360),
                 "align": "center",
-                "fontsize": 18,
+                "fontsize": 40,
                 "color": (1, 0, 0),
             },
             {

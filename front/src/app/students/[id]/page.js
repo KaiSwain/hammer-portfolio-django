@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 // Import services and components
 import { retrieveStudent } from "@/app/services/students"; // API to fetch student data
@@ -19,7 +19,7 @@ export default function StudentDetails() {
   const { id } = useParams(); // Get student ID from URL
   const [student, setStudent] = useState(null); // Holds student data
   const [loading, setLoading] = useState(true); // Loading state for fetching data
-
+  const router = useRouter();
   // Fetch student details on component mount
   useEffect(() => {
     retrieveStudent(id)
@@ -35,6 +35,10 @@ export default function StudentDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <div className="flex items-center justify-center mb-6">
+          <button onClick={() => router.back()} className="text-blue-600 hover:underline">← Back</button>
+          
+        </div>
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
         
         {/* ✅ Left Column: Student Summary */}

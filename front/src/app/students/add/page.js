@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createStudent } from "@/app/services/students";
 import { getdetails } from "@/app/services/details";
@@ -24,7 +24,7 @@ export default function AddStudent() {
     posttest_score: "",
     disc_assessment_type: "",
     enneagram_result: "",
-    sixteen_types_assessment: ""
+    sixteen_types_assessment: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -36,6 +36,22 @@ export default function AddStudent() {
   useEffect(() => {
     getdetails().then((data) => setDetails(data));
   }, []);
+
+  // Build quick lookup maps for IDs -> labels
+  const lookups = useMemo(() => {
+    const mapBy = (arr = [], key = "id") =>
+      arr.reduce((acc, item) => {
+        acc[item[key]] = item;
+        return acc;
+      }, {});
+    return {
+      genderById: mapBy(details.gender_identities),
+      oshaById: mapBy(details.osha_types),
+      discById: mapBy(details.disc_assessments),
+      sixById: mapBy(details.sixteen_type_assessments),
+      enneagramById: mapBy(details.enneagram_results),
+    };
+  }, [details]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -58,11 +74,11 @@ export default function AddStudent() {
     setIsSaving(true);
     const payload = {
       ...formData,
-      gender_identity: formData.gender_identity || null,
-      disc_assessment_type: formData.disc_assessment_type || null,
-      enneagram_result: formData.enneagram_result || null,
-      osha_type: formData.osha_type || null,
-      sixteen_types_assessment: formData.sixteen_types_assessment || null,
+      gender_identity_id: parseInt(formData.gender_identity) || null,
+      disc_assessment_type_id: parseInt(formData.disc_assessment_type) || null,
+      enneagram_result_id: parseInt(formData.enneagram_result) || null,
+      osha_type_id: parseInt(formData.osha_type) || null,
+      sixteen_types_assessment_id: parseInt(formData.sixteen_types_assessment) || null,
       start_date: formData.start_date || null,
       end_date: formData.end_date || null,
       osha_completion_date: formData.osha_completion_date || null,
@@ -75,7 +91,7 @@ export default function AddStudent() {
       if (response.ok) {
         setSuccess(true);
         setShowModal(false);
-        setTimeout(() => router.push("/students"), 2000);
+        setTimeout(() => router.push("/students"), 1200);
       } else {
         alert("Error saving student.");
       }
@@ -89,6 +105,67 @@ export default function AddStudent() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) setShowModal(true);
+  };
+
+  // Friendly labels for the modal
+  const modalLabels = {
+    full_name: "FULL NAME",
+    gender_identity: "GENDER IDENTITY",
+    start_date: "START DATE",
+    end_date: "END DATE",
+    complete_50_hour_training: "COMPLETE 50 HOUR TRAINING",
+    passed_osha_10_exam: "PASSED OSHA 10 EXAM",
+    osha_completion_date: "OSHA COMPLETION DATE",
+    osha_type: "OSHA TYPE",
+    hammer_math: "HAMMER MATH",
+    employability_skills: "EMPLOYABILITY SKILLS",
+    passed_ruler_assessment: "PASSED READING A RULER",
+    pretest_score: "PRE-TEST SCORE",
+    posttest_score: "POST-TEST SCORE",
+    disc_assessment_type: "DISC ASSESSMENT TYPE",
+    sixteen_types_assessment: "SIXTEEN TYPE ASSESSMENT",
+    enneagram_result: "ENNEAGRAM RESULT",
+  };
+
+  // Display order in the modal
+  const modalOrder = [
+    "full_name",
+    "gender_identity",
+    "start_date",
+    "end_date",
+    "osha_type",
+    "osha_completion_date",
+    "complete_50_hour_training",
+    "passed_osha_10_exam",
+    "hammer_math",
+    "employability_skills",
+    "passed_ruler_assessment",
+    "pretest_score",
+    "posttest_score",
+    "disc_assessment_type",
+    "sixteen_types_assessment",
+    "enneagram_result",
+  ];
+
+  // Convert raw values to display strings
+  const formatValue = (key, value) => {
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (value === "" || value == null) return "-";
+
+    switch (key) {
+      case "gender_identity":
+        return lookups.genderById[value]?.gender ?? String(value);
+      case "disc_assessment_type":
+        return lookups.discById[value]?.type_name ?? String(value);
+      case "sixteen_types_assessment":
+        return lookups.sixById[value]?.type_name ?? String(value);
+      case "enneagram_result":
+        return lookups.enneagramById[value]?.result_name ?? String(value);
+      case "osha_type":
+        return lookups.oshaById[value]?.name ?? String(value);
+      default:
+        return String(value);
+    }
   };
 
   return (
@@ -108,7 +185,7 @@ export default function AddStudent() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
+          {/* Student Info */}
           <div>
             <h2 className="text-lg font-bold text-gray-800 mb-2 uppercase">Student Info</h2>
             <label className="block font-medium text-gray-700">Full Name *</label>
@@ -129,7 +206,9 @@ export default function AddStudent() {
             >
               <option value="">Select</option>
               {details.gender_identities?.map((g) => (
-                <option key={g.id} value={g.id}>{g.gender}</option>
+                <option key={g.id} value={g.id}>
+                  {g.gender}
+                </option>
               ))}
             </select>
           </div>
@@ -171,7 +250,9 @@ export default function AddStudent() {
               >
                 <option value="">Select</option>
                 {details.osha_types?.map((type) => (
-                  <option key={type.id} value={type.id}>{type.name}</option>
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -190,9 +271,20 @@ export default function AddStudent() {
           {/* Certifications */}
           <h2 className="text-lg font-bold text-gray-800 mt-4 mb-2 uppercase">Certifications</h2>
           <div className="grid grid-cols-1 gap-2">
-            {["complete_50_hour_training", "passed_osha_10_exam", "hammer_math", "employability_skills", "passed_ruler_assessment"].map((field) => (
+            {[
+              "complete_50_hour_training",
+              "passed_osha_10_exam",
+              "hammer_math",
+              "employability_skills",
+              "passed_ruler_assessment",
+            ].map((field) => (
               <label key={field} className="flex items-center gap-2">
-                <input type="checkbox" name={field} checked={formData[field]} onChange={handleChange} />
+                <input
+                  type="checkbox"
+                  name={field}
+                  checked={formData[field]}
+                  onChange={handleChange}
+                />
                 {field.replace(/_/g, " ").toUpperCase()}
               </label>
             ))}
@@ -214,7 +306,9 @@ export default function AddStudent() {
                 >
                   <option value="">Select</option>
                   {[...Array(10)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                    <option key={i + 1} value={i + 1}>
+                      {i + 1}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -234,7 +328,9 @@ export default function AddStudent() {
               >
                 <option value="">Select</option>
                 {details.disc_assessments?.map((d) => (
-                  <option key={d.id} value={d.id}>{d.type_name}</option>
+                  <option key={d.id} value={d.id}>
+                    {d.type_name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -248,7 +344,9 @@ export default function AddStudent() {
               >
                 <option value="">Select</option>
                 {details.sixteen_type_assessments?.map((type) => (
-                  <option key={type.id} value={type.id}>{type.type_name}</option>
+                  <option key={type.id} value={type.id}>
+                    {type.type_name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -262,7 +360,9 @@ export default function AddStudent() {
               >
                 <option value="">Select</option>
                 {details.enneagram_results?.map((e) => (
-                  <option key={e.id} value={e.id}>{e.result_name}</option>
+                  <option key={e.id} value={e.id}>
+                    {e.result_name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -287,10 +387,10 @@ export default function AddStudent() {
             </p>
 
             <div className="space-y-2 text-gray-700 text-sm max-h-96 overflow-y-auto">
-              {Object.entries(formData).map(([key, value]) => (
+              {modalOrder.map((key) => (
                 <div key={key} className="flex justify-between border-b py-1">
-                  <span className="capitalize">{key.replace(/_/g, " ")}:</span>
-                  <span>{typeof value === "boolean" ? (value ? "Yes" : "No") : value || "-"}</span>
+                  <span className="font-medium">{modalLabels[key]}:</span>
+                  <span>{formatValue(key, formData[key])}</span>
                 </div>
               ))}
             </div>

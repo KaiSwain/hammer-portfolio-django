@@ -40,7 +40,7 @@ export default function StudentSummary({ student }) {
       </div>
 
       <button
-        onClick={() => router.push(`/students/edit/${student.id}`)}
+        onClick={() => router.push(`/students/${student.id}/edit`)}
         className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
       >
         Edit Student

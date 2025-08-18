@@ -1,0 +1,36 @@
+<!-- templates/personality_summary.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Personality Summary</title>
+  <style>
+    @page { size: Letter; margin: 0.75in; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.35; color:#111; }
+    h1 { font-size: 18px; margin: 0 0 6px; }             /* smaller heading */
+    p, ul, ol { margin: 6px 0; }
+    h2 { font-size: 12px; margin: 12px 0 4px; page-break-after: avoid; }
+    h3 { font-size: 11px; margin: 10px 0 4px; page-break-after: avoid; }
+
+    /* ↓ everything inside the AI block is tiny */
+    .ai-summary         { font-size: 20px; line-height: 2; }
+    .ai-summary p, 
+    .ai-summary li      { font-size: 10px; }
+    .ai-summary h2      { font-size: 12px; }
+    .ai-summary h3      { font-size: 11px; }
+
+    /* keep lists neat and prevent awkward breaks */
+    .ai-summary ul      { margin: 6px 0 6px 16px; padding: 0; }
+    .ai-summary li      { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <div style="font-size:11px;color:#666;margin-bottom:6px;">Generated: {{ generated_at }}</div>
+  <h1>Personality Summary — {{ name }}</h1>
+
+  <!-- AI HTML goes here -->
+  <div class="ai-summary">
+    {{ summary_html|safe }}
+  </div>
+</body>
+</html>

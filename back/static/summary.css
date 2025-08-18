@@ -1,0 +1,15 @@
+@page { size: Letter; margin: 0.75in; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.4; }
+h1 { margin: 0 0 2px; font-size: 21px; }
+h2 { margin: 0 0 8px; font-size: 17px; }
+h3 { margin: 18px 0 6px; font-size: 13px; }
+p { margin: 6px 0; font-size: 9px; }
+.subtle { color: #666; font-size: 11px; }
+.meta { color: #333; font-size: 12px; }
+.header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.logo { height: 36px; width: auto; }
+.footer { margin-top: 18px; border-top: 1px solid #ddd; padding-top: 8px; color: #666; font-size: 10px; }
+
+/* avoid awkward breaks */
+section, h2, h3, p { page-break-inside: avoid; }

@@ -1,0 +1,33 @@
+# Core Django and API Framework
+Django==5.2.4
+djangorestframework==3.15.2
+django-cors-headers==4.4.0
+
+# Database and Environment
+psycopg2-binary==2.9.9
+dj-database-url==2.2.0
+python-decouple==3.8
+
+# Production Server and Static Files
+gunicorn==23.0.0
+whitenoise==6.8.2
+
+# PDF Generation
+pymupdf==1.24.10
+borb==2.1.25
+
+# AI Integration
+openai==1.55.0
+
+# Development and Testing (optional for production)
+django-debug-toolbar==4.4.6
+
+# Security and Monitoring
+django-ratelimit==4.1.0
+sentry-sdk[django]==2.17.0
+
+# Additional Production Dependencies
+redis==5.2.0
+celery==5.4.0
+django-celery-beat==2.7.0
+pillow==10.4.0

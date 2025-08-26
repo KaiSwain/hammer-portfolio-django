@@ -37,21 +37,21 @@ INSTR = (
 
   "The \"html\" value must be CLEAN BODY HTML (no <html>, <head>, or <body> tags). Use semantic headings/lists only—no inline CSS.\n\n"
 
-  "Structure EXACTLY (keep each section brief but engaging):\n"
-  "- Short <p> intro (1-2 sentences) highlighting their unique personality blend from assessments present.\n"
+  "Structure EXACTLY (make each section substantial and engaging):\n"
+  "- Detailed <p> intro (2-3 sentences) highlighting their unique personality blend from assessments present.\n"
   "<h2>Workstyle & Communication</h2>\n"
-  "  <p>1-2 sentences about their natural work approach and communication style.</p>\n"
-  "  <ul><li>3-4 bullets of specific on-site behaviors and strengths.</li></ul>\n"
+  "  <p>2-3 sentences about their natural work approach and communication style with specific examples.</p>\n"
+  "  <ul><li>4-5 bullets of specific on-site behaviors and strengths with concrete examples.</li></ul>\n"
   "<h2>Motivators & Learning Style</h2>\n"
-  "  <p>1-2 sentences about what energizes and drives them.</p>\n"
-  "  <ul><li>3-4 bullets about feedback preferences and learning approaches.</li></ul>\n"
+  "  <p>2-3 sentences about what energizes and drives them with specific details.</p>\n"
+  "  <ul><li>4-5 bullets about feedback preferences and learning approaches with examples.</li></ul>\n"
   "<h2>Best-Fit Environment</h2>\n"
-  "  <p>1-2 sentences about their ideal work setting and team dynamics.</p>\n"
-  "  <ul><li>3-4 bullets about tools, structure, and support that helps them thrive.</li></ul>\n"
+  "  <p>2-3 sentences about their ideal work setting and team dynamics with specifics.</p>\n"
+  "  <ul><li>4-5 bullets about tools, structure, and support that helps them thrive.</li></ul>\n"
   "<h2>Management Tips</h2>\n"
-  "  <p>3-5 specific, actionable employer recommendations based on their assessment types.</p>\n\n"
+  "  <p>5-7 specific, actionable employer recommendations based on their assessment types with concrete examples.</p>\n\n"
 
-  "Length: 250-280 words MAX (strictly enforced). Use dynamic, positive language while staying professional. "
+  "Length: 500-550 words MAX (strictly enforced). Use dynamic, positive language while staying professional. "
   "Be specific to their actual assessment results. Make it feel personal and valuable to employers.\n\n"
   
   "CRITICAL: Your response must be ONLY the JSON object, nothing else. No explanations, no markdown, just the JSON."
@@ -112,8 +112,8 @@ def _validate_one_page_content(html_content: str, student_name: str) -> str:
     Returns guaranteed one-page HTML content.
     """
     # Word count limits for guaranteed one-page fit
-    MAX_WORDS = 280  # Conservative limit for one page
-    MAX_BULLETS_PER_SECTION = 3  # Max bullets per section
+    MAX_WORDS = 550  # Increased limit - still fits on one page comfortably
+    MAX_BULLETS_PER_SECTION = 4  # Max bullets per section (increased from 3)
     
     # Simple word count (avoid BeautifulSoup dependency)
     # Remove HTML tags for word counting
@@ -128,53 +128,72 @@ def _validate_one_page_content(html_content: str, student_name: str) -> str:
         print(f"[AI] Content too long ({word_count} words), using truncated version...")
         return _create_truncated_content(student_name)
     
-    # Limit bullets per section using simple regex
-    # Find all <ul>...</ul> blocks and limit to 3 <li> items each
-    def limit_bullets(match):
-        ul_content = match.group(1)
-        li_items = re.findall(r'<li[^>]*>.*?</li>', ul_content, re.DOTALL)
-        limited_items = li_items[:MAX_BULLETS_PER_SECTION]
-        return '<ul>' + ''.join(limited_items) + '</ul>'
-    
-    html_content = re.sub(r'<ul[^>]*>(.*?)</ul>', limit_bullets, html_content, flags=re.DOTALL)
+        # Limit bullets per section using simple regex
+        # Find all <ul>...</ul> blocks and limit to 4 <li> items each
+        def limit_bullets(match):
+            ul_content = match.group(1)
+            li_items = re.findall(r'<li[^>]*>.*?</li>', ul_content, re.DOTALL)
+            limited_items = li_items[:MAX_BULLETS_PER_SECTION]  # Now 4 instead of 3
+            return '<ul>' + ''.join(limited_items) + '</ul>'
+        
+        html_content = re.sub(r'<ul[^>]*>(.*?)</ul>', limit_bullets, html_content, flags=re.DOTALL)
     
     return html_content
 
 def _create_truncated_content(student_name: str) -> str:
     """Create a truncated version that fits on one page."""
     return f"""
-    <p>{student_name} brings unique strengths and dedication to every project.</p>
+    <p>{student_name} brings unique strengths and dedication to every project, demonstrating strong commitment to quality work and professional development.</p>
     <h2>Workstyle & Communication</h2>
-    <p>Natural approach to work and team collaboration.</p>
+    <p>Shows natural approach to work and team collaboration with emphasis on clear communication and reliability.</p>
     <ul>
-    <li>Demonstrates strong work ethic and reliability</li>
-    <li>Communicates effectively with team members</li>
-    <li>Adapts well to different project requirements</li>
+    <li>Demonstrates strong work ethic and reliability in all tasks</li>
+    <li>Communicates effectively with team members and supervisors</li>
+    <li>Adapts well to different project requirements and challenges</li>
+    <li>Takes initiative in problem-solving and process improvement</li>
     </ul>
     <h2>Motivators & Learning Style</h2>
-    <p>Thrives with clear guidance and hands-on experience.</p>
+    <p>Thrives with clear guidance and hands-on experience, showing strong motivation for skill development and career advancement.</p>
     <ul>
-    <li>Responds well to constructive feedback</li>
-    <li>Learns best through practical application</li>
-    <li>Values recognition for quality work</li>
+    <li>Responds positively to constructive feedback and coaching</li>
+    <li>Learns best through practical application and mentorship</li>
+    <li>Values recognition for quality work and professional growth</li>
+    <li>Shows enthusiasm for expanding technical knowledge and skills</li>
+    </ul>
+    <h2>Best-Fit Environment</h2>
+    <p>Works best in structured environments with clear expectations and opportunities for hands-on learning and skill development.</p>
+    <ul>
+    <li>Benefits from mentorship and guidance from experienced professionals</li>
+    <li>Thrives with clear project goals and regular feedback</li>
+    <li>Appreciates opportunities to develop both technical and leadership skills</li>
+    <li>Values safety-focused workplace culture and protocols</li>
     </ul>
     <h2>Management Tips</h2>
-    <p>Provide clear expectations and regular feedback. Consider pairing with experienced mentors for optimal development and skill building.</p>
+    <p>Provide clear expectations and regular feedback. Consider pairing with experienced mentors for optimal development. Recognize achievements and provide opportunities for skill building. Encourage questions and foster a supportive learning environment that promotes both technical growth and leadership development.</p>
     """
 
 def _create_guaranteed_one_page_content(student_name: str) -> str:
     """Create minimal but professional content guaranteed to fit on one page."""
     return f"""
-    <p>{student_name} is a dedicated team member ready to contribute to your organization.</p>
+    <p>{student_name} is a dedicated team member ready to contribute effectively to your organization with strong foundational skills and professional commitment.</p>
     <h2>Workstyle & Communication</h2>
-    <p>Brings enthusiasm and commitment to every project.</p>
+    <p>Brings enthusiasm and commitment to every project with focus on quality and teamwork.</p>
     <ul>
-    <li>Strong work ethic and attention to detail</li>
-    <li>Effective team communication skills</li>
-    <li>Eager to learn and follow safety protocols</li>
+    <li>Strong work ethic and attention to detail in all assignments</li>
+    <li>Effective team communication skills and collaborative approach</li>
+    <li>Eager to learn and consistently follows safety protocols</li>
+    <li>Shows reliability and punctuality in work commitments</li>
+    </ul>
+    <h2>Motivators & Learning Style</h2>
+    <p>Motivated by opportunities to develop skills and contribute meaningfully to team success.</p>
+    <ul>
+    <li>Thrives with hands-on learning and practical application</li>
+    <li>Responds well to mentorship and guidance</li>
+    <li>Values recognition for quality work and improvement</li>
+    <li>Shows initiative in professional development</li>
     </ul>
     <h2>Management Tips</h2>
-    <p>Provide mentorship opportunities and clear project guidelines for best results.</p>
+    <p>Provide mentorship opportunities and clear project guidelines for best results. Encourage questions and offer regular feedback to support continued growth and development in both technical skills and professional competencies.</p>
     """
 
 def _call_model(payload: Dict[str, Any], model_id: str):
@@ -186,7 +205,7 @@ def _call_model(payload: Dict[str, Any], model_id: str):
         model=model_id,
         instructions=INSTR,
         input=json.dumps(payload),
-        max_output_tokens=1500,  # Further reduced for guaranteed one-page summaries
+        max_output_tokens=3000,  # Increased from 1500 to allow for more detailed summaries
     )
 
     # If the chosen model is known to reject temperature, skip it

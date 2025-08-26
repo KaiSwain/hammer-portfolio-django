@@ -75,6 +75,22 @@ export default function AddStudent() {
     if (!formData.full_name.trim()) {
       newErrors.full_name = "Full name is required.";
     }
+    
+    // Validate test scores if provided
+    if (formData.pretest_score) {
+      const pretest = parseInt(formData.pretest_score);
+      if (pretest < 1 || pretest > 14) {
+        newErrors.pretest_score = "Pre-test score must be between 1 and 14.";
+      }
+    }
+    
+    if (formData.posttest_score) {
+      const posttest = parseInt(formData.posttest_score);
+      if (posttest < 1 || posttest > 14) {
+        newErrors.posttest_score = "Post-test score must be between 1 and 14.";
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -96,15 +112,13 @@ export default function AddStudent() {
     };
 
     try {
-      const response = await createStudent(payload);
-      if (response.ok) {
-        setSuccess(true);
-        setShowModal(false);
-        setTimeout(() => router.push("/students"), 1200);
-      } else {
-        alert("Error saving student.");
-      }
-    } catch {
+      const createdStudent = await createStudent(payload);
+      // If we reach here, the student was created successfully
+      setSuccess(true);
+      setShowModal(false);
+      setTimeout(() => router.push("/students"), 1200);
+    } catch (error) {
+      console.error("Error creating student:", error);
       alert("Something went wrong.");
     } finally {
       setIsSaving(false);
@@ -113,7 +127,10 @@ export default function AddStudent() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validateForm()) setShowModal(true);
+    // Only show modal on final step, otherwise just navigate
+    if (currentStep === 4) {
+      if (validateForm()) setShowModal(true);
+    }
   };
 
   const nextStep = () => {
@@ -525,7 +542,7 @@ export default function AddStudent() {
               <div className="space-y-6">
                 <div className="text-center mb-6">
                   <h2 className="text-xl font-semibold text-gray-800">Test Scores</h2>
-                  <p className="text-gray-600 text-sm">Enter pre and post assessment scores</p>
+                  <p className="text-gray-600 text-sm">Enter pre and post assessment scores (1-14 scale)</p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8">
@@ -538,13 +555,16 @@ export default function AddStudent() {
                     <input
                       name="pretest_score"
                       type="number"
-                      min="0"
-                      max="100"
+                      min="1"
+                      max="14"
                       value={formData.pretest_score}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-center text-xl font-semibold"
-                      placeholder="0-100"
+                      placeholder="1-14"
                     />
+                    {errors.pretest_score && (
+                      <p className="text-red-500 text-sm mt-2 text-center">{errors.pretest_score}</p>
+                    )}
                   </div>
 
                   <div className="bg-green-50 p-6 rounded-lg">
@@ -556,13 +576,16 @@ export default function AddStudent() {
                     <input
                       name="posttest_score"
                       type="number"
-                      min="0"
-                      max="100"
+                      min="1"
+                      max="14"
                       value={formData.posttest_score}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-xl font-semibold"
-                      placeholder="0-100"
+                      placeholder="1-14"
                     />
+                    {errors.posttest_score && (
+                      <p className="text-red-500 text-sm mt-2 text-center">{errors.posttest_score}</p>
+                    )}
                   </div>
                 </div>
 
@@ -615,7 +638,10 @@ export default function AddStudent() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => {
+                    if (validateForm()) setShowModal(true);
+                  }}
                   className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center"
                 >
                   <span className="mr-2">✅</span>

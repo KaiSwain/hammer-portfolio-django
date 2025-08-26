@@ -132,13 +132,34 @@ export default function EditStudentPage() {
       setError("Full name is required.");
       return false;
     }
+    
+    // Validate test scores if provided
+    if (formData.pretest_score) {
+      const pretest = parseInt(formData.pretest_score);
+      if (pretest < 1 || pretest > 14) {
+        setError("Pre-test score must be between 1 and 14.");
+        return false;
+      }
+    }
+    
+    if (formData.posttest_score) {
+      const posttest = parseInt(formData.posttest_score);
+      if (posttest < 1 || posttest > 14) {
+        setError("Post-test score must be between 1 and 14.");
+        return false;
+      }
+    }
+    
     setError("");
     return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validateForm()) setShowModal(true);
+    // Only show modal on final step, otherwise just navigate
+    if (currentStep === 4) {
+      if (validateForm()) setShowModal(true);
+    }
   };
 
   const handleConfirmSave = async () => {
@@ -552,7 +573,7 @@ export default function EditStudentPage() {
               <div className="space-y-6">
                 <div className="text-center mb-6">
                   <h2 className="text-xl font-semibold text-gray-800">Test Scores</h2>
-                  <p className="text-gray-600 text-sm">Update pre and post assessment scores</p>
+                  <p className="text-gray-600 text-sm">Update pre and post assessment scores (1-14 scale)</p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8">
@@ -565,12 +586,12 @@ export default function EditStudentPage() {
                     <input
                       name="pretest_score"
                       type="number"
-                      min="0"
-                      max="100"
+                      min="1"
+                      max="14"
                       value={formData.pretest_score}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-yellow-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-center text-xl font-semibold"
-                      placeholder="0-100"
+                      placeholder="1-14"
                     />
                   </div>
 
@@ -583,12 +604,12 @@ export default function EditStudentPage() {
                     <input
                       name="posttest_score"
                       type="number"
-                      min="0"
-                      max="100"
+                      min="1"
+                      max="14"
                       value={formData.posttest_score}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-xl font-semibold"
-                      placeholder="0-100"
+                      placeholder="1-14"
                     />
                   </div>
                 </div>
@@ -642,7 +663,10 @@ export default function EditStudentPage() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => {
+                    if (validateForm()) setShowModal(true);
+                  }}
                   className="px-8 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors flex items-center"
                 >
                   <span className="mr-2">💾</span>

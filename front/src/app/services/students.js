@@ -133,7 +133,19 @@ export const deleteStudent = async (id) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    return response.json();
+    // DELETE requests typically return 204 No Content with empty body
+    // Only try to parse JSON if there's actually content
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return { success: true, message: 'Student deleted successfully' };
+    }
+    
+    // Check if response has content before parsing JSON
+    const text = await response.text();
+    if (!text) {
+      return { success: true, message: 'Student deleted successfully' };
+    }
+    
+    return JSON.parse(text);
   } catch (error) {
     console.error('Error deleting student:', error);
     throw error;

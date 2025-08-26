@@ -23,8 +23,8 @@ class StudentViewSet(ModelViewSet):
     """
     serializer_class = StudentSerializer
     
-    # Allow public access in development, require auth in production
-    permission_classes = [AllowAny if settings.DEBUG else IsAuthenticated]
+    # Always require authentication for proper teacher-student isolation
+    permission_classes = [IsAuthenticated]
 
     def _get_teacher(self):
         try:
@@ -33,18 +33,8 @@ class StudentViewSet(ModelViewSet):
             raise NotFound("Teacher not found")
 
     def get_queryset(self):
-        # In development mode, return all students for testing
-        if settings.DEBUG:
-            return Student.objects.all().select_related(
-                "gender_identity",
-                "disc_assessment_type", 
-                "sixteen_types_assessment",
-                "enneagram_result",
-                "osha_type",
-                "teacher"
-            ).order_by("-created_at")
-        
-        # In production, only return teacher's students
+        # Always filter by teacher - this is essential for data isolation
+        # Even in development mode, teachers should only see their own students
         teacher = self._get_teacher()
         return (
             Student.objects.filter(teacher=teacher)

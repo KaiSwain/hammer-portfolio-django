@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Footer() {
   return (
     <footer className="bg-gray-800 text-white py-8 mt-auto">
@@ -6,8 +8,13 @@ export default function Footer() {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <span className="text-2xl mr-2">🔨</span>
-              <h3 className="text-lg font-semibold">If I Had A Hammer</h3>
+              <Image
+                src="/Hammer-Primary-Blue-Logo.png"
+                alt="If I Had A Hammer Logo"
+                width={120}
+                height={40}
+                className="h-8 w-auto mr-2 filter brightness-0 invert"
+              />
             </div>
             <p className="text-gray-300 text-sm">
               Empowering the next generation of skilled tradespeople through 

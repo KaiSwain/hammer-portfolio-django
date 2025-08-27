@@ -88,7 +88,22 @@ export const createStudent = async (studentObj) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Create student error:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}`);
+      
+      // Try to parse the error response to get detailed error info
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        // Create an error object that includes the parsed response
+        const error = new Error(errorMessage);
+        error.response = errorText;
+        error.data = errorData;
+        throw error;
+      } catch (parseError) {
+        // If we can't parse it, just throw with the text
+        const error = new Error(errorMessage);
+        error.response = errorText;
+        throw error;
+      }
     }
     
     return response.json();
@@ -111,7 +126,22 @@ export const editStudent = async (studentObj, id) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Edit student error:', errorText);
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      
+      // Try to parse the error response to get detailed error info
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        // Create an error object that includes the parsed response
+        const error = new Error(errorMessage);
+        error.response = errorText;
+        error.data = errorData;
+        throw error;
+      } catch (parseError) {
+        // If we can't parse it, just throw with the text
+        const error = new Error(errorMessage);
+        error.response = errorText;
+        throw error;
+      }
     }
     
     return response.json();

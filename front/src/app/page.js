@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -7,9 +8,16 @@ export default function Home() {
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 border border-gray-200">
           {/* Logo/Header */}
           <div className="mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
-              🔨 If I Had A Hammer
-            </h1>
+            <div className="flex justify-center mb-4">
+              <Image
+                src="/Hammer-Primary-Blue-Logo.png"
+                alt="If I Had A Hammer Logo"
+                width={300}
+                height={100}
+                className="h-16 md:h-20 w-auto"
+                priority
+              />
+            </div>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Empowering the next generation of skilled tradespeople through comprehensive 
               pre-apprenticeship training and assessment.

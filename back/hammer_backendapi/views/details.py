@@ -6,7 +6,8 @@ from hammer_backendapi.models import (
     DiscAssessment,
     SixteenTypeAssessment,
     EnneagramResult,
-    OshaType
+    OshaType,
+    FundingSource
 )
 
 class StudentForeignKeyOptionsView(APIView):
@@ -18,6 +19,7 @@ class StudentForeignKeyOptionsView(APIView):
                 "sixteen_type_assessments": list(SixteenTypeAssessment.objects.values("id", "type_name")),
                 "enneagram_results": list(EnneagramResult.objects.values("id", "result_name")),
                 "osha_types": list(OshaType.objects.values("id", "name")),
+                "funding_sources": list(FundingSource.objects.values("id", "name", "description")),
             }
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:

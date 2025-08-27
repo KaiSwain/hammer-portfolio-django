@@ -9,7 +9,10 @@ export default function StudentSummary({ student }) {
   // Group fields into logical sections for better organization
   const personalInfo = [
     { label: "Full Name", value: student.full_name, icon: "👤" },
+    { label: "Email", value: student.email || "Not provided", icon: "📧" },
+    { label: "NCCER Number", value: student.nccer_number || "Not provided", icon: "🆔" },
     { label: "Gender Identity", value: student.gender_identity?.gender ?? "Not specified", icon: "🏷️" },
+    { label: "Funding Source", value: student.funding_source?.name ?? "Not specified", icon: "💰" },
     { label: "Class Start Date", value: student.start_date ? new Date(student.start_date).toLocaleDateString() : "Not set", icon: "📅" },
     { label: "Class End Date", value: student.end_date ? new Date(student.end_date).toLocaleDateString() : "Not set", icon: "📅" },
     { label: "Created At", value: new Date(student.created_at).toLocaleDateString(), icon: "📝" },
@@ -19,6 +22,7 @@ export default function StudentSummary({ student }) {
     { label: "50-Hour Training", value: student.complete_50_hour_training, icon: "🎓" },
     { label: "HammerMath", value: student.hammer_math, icon: "🔨" },
     { label: "Employability Skills", value: student.employability_skills, icon: "💼" },
+    { label: "Job Interview Skills", value: student.job_interview_skills, icon: "🤝" },
     { label: "Reading Ruler Assessment", value: student.passed_ruler_assessment, icon: "📏" },
   ];
 
@@ -99,7 +103,7 @@ export default function StudentSummary({ student }) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold mb-2">{student.full_name}</h2>
-            <p className="text-blue-100 text-lg">Construction Pre-Apprentice</p>
+            <p className="text-blue-100 text-md">Make Sure All Info Is Correct Before Generating Certificates</p>
             <div className="flex items-center mt-4 space-x-4">
               <div className="flex items-center">
                 <span className="text-2xl mr-2">📅</span>

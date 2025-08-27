@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
@@ -172,10 +173,15 @@ export default function Login() {
       <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="text-4xl mb-4">🔨</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            If I Had A Hammer
-          </h1>
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/Hammer-Primary-Blue-Logo.png"
+              alt="If I Had A Hammer Logo"
+              width={200}
+              height={80}
+              className="h-12 w-auto"
+            />
+          </div>
           <p className="text-gray-600 text-sm">Teacher Portal Access</p>
         </div>
 

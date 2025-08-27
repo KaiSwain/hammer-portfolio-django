@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getStudents } from "../services/students";
 import { useRouter } from "next/navigation";
 
@@ -84,7 +85,15 @@ export default function StudentPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl mr-4">🔨</Link>
+              <Link href="/" className="mr-4">
+                <Image
+                  src="/Hammer-Primary-Blue-Logo.png"
+                  alt="If I Had A Hammer Logo"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
+                />
+              </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Student Portfolio</h1>
                 <p className="text-gray-600 text-sm">If I Had A Hammer - Teacher Dashboard</p>
@@ -212,6 +221,10 @@ export default function StudentPage() {
                           <div className="flex items-center text-xs">
                             <span className={`w-2 h-2 rounded-full mr-2 ${student.employability_skills ? 'bg-green-500' : 'bg-gray-300'}`}></span>
                             Employability Skills
+                          </div>
+                          <div className="flex items-center text-xs">
+                            <span className={`w-2 h-2 rounded-full mr-2 ${student.job_interview_skills ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                            Job Interview Skills
                           </div>
                           <div className="flex items-center text-xs">
                             <span className={`w-2 h-2 rounded-full mr-2 ${student.passed_ruler_assessment ? 'bg-green-500' : 'bg-gray-300'}`}></span>

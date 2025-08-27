@@ -8,6 +8,7 @@ from hammer_backendapi.models import (
     SixteenTypeAssessment,
     EnneagramResult,
     OshaType,
+    FundingSource,
 )
 
 # ---- Nested serializers (read-only) ----
@@ -41,6 +42,12 @@ class OshaTypeSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
+class FundingSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FundingSource
+        fields = ("id", "name", "description")
+
+
 # ---- Main serializer ----
 class StudentSerializer(serializers.ModelSerializer):
     # READ: nested related objects (safe, explicit)
@@ -49,6 +56,7 @@ class StudentSerializer(serializers.ModelSerializer):
     sixteen_types_assessment = SixteenTypeSerializer(read_only=True)
     enneagram_result = EnneagramResultSerializer(read_only=True)
     osha_type = OshaTypeSerializer(read_only=True)
+    funding_source = FundingSourceSerializer(read_only=True)
 
     # WRITE: accept IDs for FKs
     gender_identity_id = serializers.PrimaryKeyRelatedField(
@@ -86,6 +94,13 @@ class StudentSerializer(serializers.ModelSerializer):
         allow_null=True,
         write_only=True,
     )
+    funding_source_id = serializers.PrimaryKeyRelatedField(
+        source="funding_source",
+        queryset=FundingSource.objects.all(),
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
 
     # OPTIONAL: quick validation on scores
     pretest_score = serializers.IntegerField(
@@ -102,6 +117,8 @@ class StudentSerializer(serializers.ModelSerializer):
             "id",
             "teacher",
             "full_name",
+            "email",
+            "nccer_number",
             "start_date",
             "end_date",
             "complete_50_hour_training",
@@ -109,6 +126,7 @@ class StudentSerializer(serializers.ModelSerializer):
             "osha_completion_date",
             "hammer_math",
             "employability_skills",
+            "job_interview_skills",
             "passed_ruler_assessment",
             "pretest_score",
             "posttest_score",
@@ -119,12 +137,14 @@ class StudentSerializer(serializers.ModelSerializer):
             "sixteen_types_assessment",
             "enneagram_result",
             "osha_type",
+            "funding_source",
             # write-only ids
             "gender_identity_id",
             "disc_assessment_type_id",
             "sixteen_types_assessment_id",
             "enneagram_result_id",
             "osha_type_id",
+            "funding_source_id",
         )
 
     def validate(self, attrs):

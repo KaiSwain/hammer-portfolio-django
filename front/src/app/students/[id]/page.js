@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 // Import services and components
 import { retrieveStudent, deleteStudent } from "@/app/services/students"; // API to fetch student data
@@ -95,7 +96,15 @@ export default function StudentDetails() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Link href="/students" className="text-2xl mr-4">🔨</Link>
+              <Link href="/students" className="mr-4">
+                <Image
+                  src="/Hammer-Primary-Blue-Logo.png"
+                  alt="If I Had A Hammer Logo"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
+                />
+              </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{student.full_name}</h1>
                 <p className="text-gray-600 text-sm">Student Profile & Certificate Management</p>

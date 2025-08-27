@@ -18,7 +18,8 @@ class Teacher(models.Model):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)  # raw initially, then hashed
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, blank=True)
-    city_state = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., 'Austin, TX' or 'Los Angeles, CA'")
+    state = models.ForeignKey('State', on_delete=models.SET_NULL, null=True, blank=True)
+    region = models.ForeignKey('Region', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -63,6 +64,29 @@ class OshaType(models.Model):
         return self.name
 
 
+class FundingSource(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True, help_text="Optional description of the funding source")
+
+    def __str__(self):
+        return self.name
+
+
+class State(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    abbreviation = models.CharField(max_length=2, unique=True, help_text="Two-letter state abbreviation")
+
+    def __str__(self):
+        return self.name
+
+
+class Region(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 # ===========================
 # Student Model
 # ===========================
@@ -70,12 +94,15 @@ class OshaType(models.Model):
 class Student(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='students')
     full_name = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, null=True)
+    nccer_number = models.CharField(max_length=50, blank=True, null=True, help_text="NCCER credential number")
 
     # Use Foreign Keys instead of plain text
     gender_identity = models.ForeignKey(GenderIdentity, on_delete=models.SET_NULL, null=True, blank=True)
     disc_assessment_type = models.ForeignKey(DiscAssessment, on_delete=models.SET_NULL, null=True, blank=True)
     sixteen_types_assessment = models.ForeignKey(SixteenTypeAssessment, on_delete=models.SET_NULL, null=True, blank=True)
     enneagram_result = models.ForeignKey(EnneagramResult, on_delete=models.SET_NULL, null=True, blank=True)
+    funding_source = models.ForeignKey(FundingSource, on_delete=models.SET_NULL, null=True, blank=True)
 
     # Training Dates
     start_date = models.DateField(null=True, blank=True)
@@ -90,6 +117,7 @@ class Student(models.Model):
     # Skills
     hammer_math = models.BooleanField(default=False)
     employability_skills = models.BooleanField(default=False)
+    job_interview_skills = models.BooleanField(default=False)
 
     # Assessments
     passed_ruler_assessment = models.BooleanField(default=False)

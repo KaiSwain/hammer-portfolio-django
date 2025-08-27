@@ -3,18 +3,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 // services
 import { retrieveStudent, editStudent } from "@/app/services/students";
 import { getdetails } from "@/app/services/details";
 
-/**
- * EditStudentPage
- * - Loads a student by id
- * - Pre-fills a form with modern multi-step design
- * - Lets you edit & save (PATCH)
- * - Uses dropdowns for related fields (IDs)
- */
 export default function EditStudentPage() {
   const router = useRouter();
   const { id } = useParams();
@@ -25,11 +19,15 @@ export default function EditStudentPage() {
   const [success, setSuccess] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const [details, setDetails] = useState({});
   const [formData, setFormData] = useState({
     full_name: "",
+    email: "",
+    nccer_number: "",
     gender_identity: "",
+    funding_source: "",
     start_date: "",
     end_date: "",
     complete_50_hour_training: false,
@@ -38,6 +36,7 @@ export default function EditStudentPage() {
     osha_type: "",
     hammer_math: false,
     employability_skills: false,
+    job_interview_skills: false,
     passed_ruler_assessment: false,
     pretest_score: "",
     posttest_score: "",
@@ -46,16 +45,7 @@ export default function EditStudentPage() {
     enneagram_result: "",
   });
 
-  // Check authentication
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-  }, [router]);
-
-  // Build quick lookup maps for IDs -> labels
+  // Create lookup maps for dropdowns
   const lookups = useMemo(() => {
     const mapBy = (arr = [], key = "id") =>
       arr.reduce((acc, item) => {
@@ -68,8 +58,18 @@ export default function EditStudentPage() {
       discById: mapBy(details.disc_assessments),
       sixById: mapBy(details.sixteen_type_assessments),
       enneagramById: mapBy(details.enneagram_results),
+      fundingById: mapBy(details.funding_sources),
     };
   }, [details]);
+
+  // Check authentication
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+  }, [router]);
 
   // load reference lists + student
   useEffect(() => {
@@ -88,7 +88,10 @@ export default function EditStudentPage() {
         if (studentData) {
           setFormData({
             full_name: studentData.full_name || "",
+            email: studentData.email || "",
+            nccer_number: studentData.nccer_number || "",
             gender_identity: studentData.gender_identity?.id || "",
+            funding_source: studentData.funding_source?.id || "",
             start_date: studentData.start_date || "",
             end_date: studentData.end_date || "",
             complete_50_hour_training: !!studentData.complete_50_hour_training,
@@ -97,6 +100,7 @@ export default function EditStudentPage() {
             osha_type: studentData.osha_type?.id || "",
             hammer_math: !!studentData.hammer_math,
             employability_skills: !!studentData.employability_skills,
+            job_interview_skills: !!studentData.job_interview_skills,
             passed_ruler_assessment: !!studentData.passed_ruler_assessment,
             pretest_score: studentData.pretest_score ?? "",
             posttest_score: studentData.posttest_score ?? "",
@@ -167,7 +171,10 @@ export default function EditStudentPage() {
     try {
       const payload = {
         full_name: formData.full_name,
+        email: formData.email || null,
+        nccer_number: formData.nccer_number || null,
         gender_identity_id: Number(formData.gender_identity) || null,
+        funding_source_id: Number(formData.funding_source) || null,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
         complete_50_hour_training: !!formData.complete_50_hour_training,
@@ -176,6 +183,7 @@ export default function EditStudentPage() {
         osha_type_id: Number(formData.osha_type) || null,
         hammer_math: !!formData.hammer_math,
         employability_skills: !!formData.employability_skills,
+        job_interview_skills: !!formData.job_interview_skills,
         passed_ruler_assessment: !!formData.passed_ruler_assessment,
         pretest_score: formData.pretest_score === "" ? null : Number(formData.pretest_score),
         posttest_score: formData.posttest_score === "" ? null : Number(formData.posttest_score),
@@ -189,7 +197,63 @@ export default function EditStudentPage() {
       setShowModal(false);
       setTimeout(() => router.push(`/students/${id}`), 1200);
     } catch (e) {
-      setError("Failed to update student.");
+      console.error("Error updating student:", e);
+      
+      // Try to extract the actual error message from the response
+      let errorMessage = "Failed to update student.";
+      
+      // Check if we have detailed error data from the API response
+      if (e.data) {
+        if (e.data.non_field_errors) {
+          errorMessage = e.data.non_field_errors.join(', ');
+        } else if (e.data.detail) {
+          errorMessage = e.data.detail;
+        } else {
+          // Collect field-specific errors
+          const fieldErrors = [];
+          Object.keys(e.data).forEach(field => {
+            if (Array.isArray(e.data[field])) {
+              fieldErrors.push(`${field}: ${e.data[field].join(', ')}`);
+            } else {
+              fieldErrors.push(`${field}: ${e.data[field]}`);
+            }
+          });
+          if (fieldErrors.length > 0) {
+            errorMessage = fieldErrors.join('\n');
+          }
+        }
+      } else if (e.response) {
+        // Try to parse the response text
+        try {
+          const errorData = JSON.parse(e.response);
+          if (errorData.non_field_errors) {
+            errorMessage = errorData.non_field_errors.join(', ');
+          } else if (errorData.detail) {
+            errorMessage = errorData.detail;
+          } else {
+            // Collect field-specific errors
+            const fieldErrors = [];
+            Object.keys(errorData).forEach(field => {
+              if (Array.isArray(errorData[field])) {
+                fieldErrors.push(`${field}: ${errorData[field].join(', ')}`);
+              } else {
+                fieldErrors.push(`${field}: ${errorData[field]}`);
+              }
+            });
+            if (fieldErrors.length > 0) {
+              errorMessage = fieldErrors.join('\n');
+            }
+          }
+        } catch (parseError) {
+          errorMessage = e.response || e.message || "Failed to update student.";
+        }
+      } else if (e.message) {
+        errorMessage = e.message.includes('HTTP error!') 
+          ? "Failed to update student. Please check your input and try again."
+          : e.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -229,7 +293,15 @@ export default function EditStudentPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Link href="/students" className="text-2xl mr-4">🔨</Link>
+              <Link href="/students" className="mr-4">
+                <Image
+                  src="/Hammer-Primary-Blue-Logo.png"
+                  alt="If I Had A Hammer Logo"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
+                />
+              </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Edit Student</h1>
                 <p className="text-gray-600 text-sm">Update {formData.full_name || "student"} information</p>
@@ -337,6 +409,33 @@ export default function EditStudentPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter student's email"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      NCCER Number
+                    </label>
+                    <input
+                      name="nccer_number"
+                      value={formData.nccer_number}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter NCCER credential number"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Gender Identity
                     </label>
                     <select
@@ -349,6 +448,25 @@ export default function EditStudentPage() {
                       {details.gender_identities?.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.gender}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Funding Source
+                    </label>
+                    <select
+                      name="funding_source"
+                      value={formData.funding_source}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select funding source</option>
+                      {details.funding_sources?.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
                         </option>
                       ))}
                     </select>
@@ -427,6 +545,17 @@ export default function EditStudentPage() {
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
                           <span className="ml-2 text-sm text-gray-700">Employability Skills Complete</span>
+                        </label>
+
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="job_interview_skills"
+                            checked={formData.job_interview_skills}
+                            onChange={handleChange}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Job Interview Skills Complete</span>
                         </label>
 
                         <label className="flex items-center">
@@ -599,7 +728,7 @@ export default function EditStudentPage() {
                     <div className="text-center mb-4">
                       <div className="text-4xl mb-2">📊</div>
                       <h3 className="font-semibold text-green-800">Post-Test Score</h3>
-                      <p className="text-green-600 text-sm">Final assessment score</p>
+                      <p className="text-green-600 text-sm">*Must have at least 10 to Pass*</p>
                     </div>
                     <input
                       name="posttest_score"

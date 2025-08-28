@@ -2,7 +2,15 @@ import fitz  # PyMuPDF
 from io import BytesIO
 from django.http import FileResponse
 from django.conf import settings
-from weasyprint import HTML
+
+# Optional WeasyPrint import - fallback if not available
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except ImportError as e:
+    print(f"WeasyPrint not available: {e}")
+    WEASYPRINT_AVAILABLE = False
+    HTML = None
 
 def generate_certificate_pdf(template_path, page_index, fields, filename="certificate.pdf"):
     """
@@ -75,6 +83,10 @@ def generate_certificate_pdf(template_path, page_index, fields, filename="certif
 def html_to_pdf_bytes(html: str, base_url: str | None = None) -> bytes:
     """
     Render HTML to PDF bytes. base_url allows CSS/images (static) to resolve.
+    Requires WeasyPrint to be available.
     """
+    if not WEASYPRINT_AVAILABLE:
+        raise RuntimeError("WeasyPrint is not available. Cannot convert HTML to PDF.")
+    
     pdf = HTML(string=html, base_url=base_url).write_pdf()
     return pdf

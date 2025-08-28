@@ -10,7 +10,7 @@ from hammer_backendapi.models import Student, Teacher
 from hammer_backendapi.serializers import StudentSerializer
 
 from django.template.loader import render_to_string
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 
 from .ai_summary import generate_long_summary_html          # << key import
@@ -74,19 +74,26 @@ class StudentViewSet(ModelViewSet):
         html = render_to_string("personality_summary.html", context)
 
         # 3) Convert HTML → PDF
-        pdf_bytes = html_to_pdf_bytes(html, base_url=request.build_absolute_uri("/"))
-
-        # 4) Return the PDF as a download
-        safe_name = student.full_name.replace(" ", "_")
-        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
-        resp["Content-Disposition"] = f'attachment; filename="AI_Personality_Summary_{safe_name}.pdf"'
-        resp["Content-Length"] = str(len(pdf_bytes))
-        # Helpful when front/back are on different origins:
-        resp["Access-Control-Expose-Headers"] = "Content-Disposition"
-        resp["Cache-Control"] = "no-store"
-        resp["Pragma"] = "no-cache"
-        resp["X-AI-Generated"] = "1"
-        return resp
+        try:
+            pdf_bytes = html_to_pdf_bytes(html, base_url=request.build_absolute_uri("/"))
+            
+            # 4) Return the PDF as a download
+            safe_name = student.full_name.replace(" ", "_")
+            resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+            resp["Content-Disposition"] = f'attachment; filename="AI_Personality_Summary_{safe_name}.pdf"'
+            resp["Content-Length"] = str(len(pdf_bytes))
+            # Helpful when front/back are on different origins:
+            resp["Access-Control-Expose-Headers"] = "Content-Disposition"
+            resp["Cache-Control"] = "no-store"
+            resp["Pragma"] = "no-cache"
+            resp["X-AI-Generated"] = "1"
+            return resp
+        except RuntimeError as e:
+            # WeasyPrint not available - return HTML instead
+            return HttpResponse(html, content_type="text/html")
+        except Exception as e:
+            print(f"[PDF] ERROR: {e}")
+            return JsonResponse({"error": "PDF generation failed"}, status=500)
     
 
     

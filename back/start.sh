@@ -12,6 +12,21 @@ echo "Python version: $(python --version)"
 echo "Django version: $(python -c 'import django; print(django.get_version())')"
 echo "Port: $PORT"
 
+# Check PDF capabilities
+echo "Checking PDF generation capabilities..."
+python -c "
+try:
+    import weasyprint
+    print('✅ WeasyPrint available')
+except ImportError as e:
+    print('❌ WeasyPrint not available:', e)
+try:
+    import fitz
+    print('✅ PyMuPDF available')
+except ImportError as e:
+    print('❌ PyMuPDF not available:', e)
+"
+
 # Run database migrations
 echo "Running database migrations..."
 python manage.py migrate --noinput

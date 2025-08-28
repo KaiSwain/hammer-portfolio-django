@@ -3,6 +3,9 @@ const nextConfig = {
   // Production optimizations
   output: 'standalone',
   
+  // No basePath needed for subdomain deployment
+  trailingSlash: true,
+  
   // Image optimization
   images: {
     unoptimized: false,
@@ -40,6 +43,7 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    NEXT_PUBLIC_BASE_PATH: process.env.NODE_ENV === 'production' ? '/portal' : '',
   },
   
   // Experimental features for better performance

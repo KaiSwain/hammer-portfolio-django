@@ -1,0 +1,25 @@
+databases:
+  - name: hammer-portfolio-db
+    databaseName: hammer_portfolio
+    user: hammer_user
+
+services:
+  - type: web
+    name: hammer-backend
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn hammer_backendproject.wsgi:application"
+    healthCheckPath: "/admin/"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hammer-portfolio-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*.onrender.com,portal.hammermath.com,hammermath.com"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "hammer_backendproject.settings"

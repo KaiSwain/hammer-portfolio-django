@@ -27,16 +27,9 @@ except ImportError as e:
     print('❌ PyMuPDF not available:', e)
 "
 
-# Run database migrations
-echo "Running database migrations..."
-python manage.py migrate --noinput
-
-# Check if migrations were successful
-if [ $? -eq 0 ]; then
-    echo "Migrations completed successfully"
-else
-    echo "Migration failed, but continuing..."
-fi
+# Initialize and run database migrations
+echo "Initializing database..."
+python manage.py init_db
 
 # Start the Gunicorn server
 echo "Starting Gunicorn server on port $PORT..."

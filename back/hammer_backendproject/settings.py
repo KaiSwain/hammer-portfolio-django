@@ -137,6 +137,14 @@ if DATABASE_URL:
         DATABASES = {
             'default': dj_database_url.parse(DATABASE_URL)
         }
+        # Add additional options for managed database compatibility
+        DATABASES['default'].update({
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+            'CONN_MAX_AGE': 600,
+            'ATOMIC_REQUESTS': True,
+        })
     except ImportError:
         # Fallback to manual parsing if dj_database_url is not available
         # This is a simple parser for postgresql:// URLs
@@ -150,6 +158,11 @@ if DATABASE_URL:
                 'PASSWORD': url.password,
                 'HOST': url.hostname,
                 'PORT': url.port,
+                'OPTIONS': {
+                    'sslmode': 'require',
+                },
+                'CONN_MAX_AGE': 600,
+                'ATOMIC_REQUESTS': True,
             }
         }
 else:
@@ -161,6 +174,9 @@ else:
             'PASSWORD': config('DB_PASSWORD', default='password'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': 'prefer',
+            },
         }
     }
 

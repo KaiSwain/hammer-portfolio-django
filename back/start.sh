@@ -53,11 +53,9 @@ except Exception as e:
     print('Continuing anyway, server might work...')
 "
 
-# Run migrations step by step
-echo "Step 1: Running Django migrations safely..."
-
-# Use our custom safe migration command
-python manage.py safe_migrate
+# Initialize database
+echo "Step 1: Initializing database..."
+./init_database.sh
 
 # Create superuser with inline script (simpler than management command)
 echo "Step 2: Creating admin user..."

@@ -150,7 +150,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'hammer_backendproject.wsgi.application'
 
 
-# Database Configuration - Environment based
+# Database Configuration - Environment based with DigitalOcean compatibility
 DATABASE_URL = config('DATABASE_URL', default='')
 if DATABASE_URL:
     try:
@@ -162,9 +162,13 @@ if DATABASE_URL:
         DATABASES['default'].update({
             'OPTIONS': {
                 'sslmode': 'require',
+                'options': '-c search_path=public'  # Ensure we're using public schema
             },
             'CONN_MAX_AGE': 600,
             'ATOMIC_REQUESTS': True,
+            'TEST': {
+                'NAME': None,  # Don't try to create test database
+            }
         })
     except ImportError:
         # Fallback to manual parsing if dj_database_url is not available
@@ -181,9 +185,13 @@ if DATABASE_URL:
                 'PORT': url.port,
                 'OPTIONS': {
                     'sslmode': 'require',
+                    'options': '-c search_path=public'
                 },
                 'CONN_MAX_AGE': 600,
                 'ATOMIC_REQUESTS': True,
+                'TEST': {
+                    'NAME': None,
+                }
             }
         }
 else:

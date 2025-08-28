@@ -11,6 +11,7 @@ export PORT=${PORT:-8080}
 echo "Python version: $(python --version)"
 echo "Django version: $(python -c 'import django; print(django.get_version())')"
 echo "Port: $PORT"
+echo "Allowed hosts: $DJANGO_ALLOWED_HOSTS"
 
 # Check PDF capabilities
 echo "Checking PDF generation capabilities..."

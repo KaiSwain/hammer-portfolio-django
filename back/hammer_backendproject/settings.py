@@ -30,6 +30,13 @@ DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 # Production-ready allowed hosts configuration
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# Add DigitalOcean App Platform domains automatically if not already included
+if not any('.ondigitalocean.app' in host for host in ALLOWED_HOSTS):
+    ALLOWED_HOSTS.extend([
+        '.ondigitalocean.app',  # Wildcard for all DigitalOcean app domains
+        'portal.hammermath.com',  # Custom domain
+    ])
+
 
 # Application definition
 

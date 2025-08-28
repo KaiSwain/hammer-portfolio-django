@@ -16,12 +16,13 @@ if env_file.exists():
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb')
 
 # OpenAI Configuration
-OPENAI_API_KEY = config("OPENAI_API_KEY")
+OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
 
-# Set OpenAI API key in environment for the openai library
+# Set OpenAI API key in environment for the openai library (only if key exists)
 # This is important because the OpenAI client reads from os.environ
-os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+if OPENAI_API_KEY:
+    os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)

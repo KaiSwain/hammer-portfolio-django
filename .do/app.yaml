@@ -1,0 +1,101 @@
+# DigitalOcean App Platform Configuration
+# This file defines both frontend and backend services
+
+name: hammer-portfolio
+region: nyc1
+
+services:
+  # Backend Django API
+  - name: hammer-backend
+    source_dir: /back
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    envs:
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "hammer_backendproject.settings"
+      - key: DJANGO_SECRET_KEY
+        type: SECRET
+        value: "your-secret-key-will-be-generated"
+      - key: OPENAI_API_KEY
+        type: SECRET
+        value: "your-openai-api-key"
+      - key: OPENAI_MODEL
+        value: "gpt-4o-mini"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "${APP_DOMAIN},${hammer-backend.PUBLIC_URL}"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://${hammer-frontend.PUBLIC_URL},https://${APP_DOMAIN}"
+      - key: DATABASE_URL
+        value: "${hammer-db.DATABASE_URL}"
+    
+    # Health check endpoint
+    health_check:
+      http_path: /admin/
+    
+    # Build and run commands
+    build_command: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    
+    run_command: |
+      python manage.py migrate --noinput
+      gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:$PORT
+
+  # Frontend Next.js App
+  - name: hammer-frontend
+    source_dir: /front
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    build_command: npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    envs:
+      - key: NODE_ENV
+        value: "production"
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://${hammer-backend.PUBLIC_URL}"
+      - key: NEXT_PUBLIC_SITE_URL
+        value: "https://${hammer-frontend.PUBLIC_URL}"
+    
+    # Health check for frontend
+    health_check:
+      http_path: /
+
+# Database
+databases:
+  - name: hammer-db
+    engine: PG
+    version: "15"
+    production: true
+    cluster_name: hammer-portfolio-db
+
+# Domain configuration
+domains:
+  - domain: portal.hammermath.com
+    type: PRIMARY
+    wildcard: false
+    zone: hammermath.com
+
+# Jobs for one-time tasks
+jobs:
+  - name: migrate
+    source_dir: /back
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    run_command: python manage.py migrate
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    kind: PRE_DEPLOY

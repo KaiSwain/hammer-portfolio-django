@@ -2,14 +2,7 @@ import fitz  # PyMuPDF
 from io import BytesIO
 from django.http import FileResponse
 from django.conf import settings
-
-# Try to import weasyprint, but handle gracefully if not available
-try:
-    from weasyprint import HTML
-    WEASYPRINT_AVAILABLE = True
-except ImportError:
-    WEASYPRINT_AVAILABLE = False
-    print("[PDF] WeasyPrint not available - HTML to PDF conversion will be disabled")
+from weasyprint import HTML
 
 def generate_certificate_pdf(template_path, page_index, fields, filename="certificate.pdf"):
     """
@@ -82,22 +75,6 @@ def generate_certificate_pdf(template_path, page_index, fields, filename="certif
 def html_to_pdf_bytes(html: str, base_url: str | None = None) -> bytes:
     """
     Render HTML to PDF bytes. base_url allows CSS/images (static) to resolve.
-    Falls back to error message if WeasyPrint is not available.
     """
-    if not WEASYPRINT_AVAILABLE:
-        # Create a simple error PDF using PyMuPDF when WeasyPrint is not available
-        doc = fitz.open()  # Create new PDF
-        page = doc.new_page()
-        
-        # Add error message
-        text = "PDF Generation Unavailable\n\nWeasyPrint library is not available in this environment.\nPlease use the web interface to view the content."
-        page.insert_text((50, 100), text, fontsize=12, color=(0, 0, 0))
-        
-        # Convert to bytes
-        pdf_bytes = doc.tobytes()
-        doc.close()
-        return pdf_bytes
-    
-    # Use WeasyPrint if available
     pdf = HTML(string=html, base_url=base_url).write_pdf()
     return pdf

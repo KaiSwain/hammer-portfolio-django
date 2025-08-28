@@ -29,14 +29,16 @@ except ImportError as e:
     print('❌ PyMuPDF not available:', e)
 "
 
-# Database connection check (without migrations)
-echo "Checking database connection..."
+# Database connection and migration
+echo "Checking database connection and running migrations..."
 python -c "
 import os
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
 django.setup()
 from django.db import connection
+from django.core.management import call_command
+
 try:
     with connection.cursor() as cursor:
         cursor.execute('SELECT version();')
@@ -49,7 +51,26 @@ try:
         if count > 0:
             print('✅ auth_user table exists')
         else:
-            print('⚠️  auth_user table does not exist - migrations may not have run')
+            print('⚠️  auth_user table does not exist - running migrations now...')
+            
+            # Try to run migrations directly
+            try:
+                print('Running migrations...')
+                call_command('migrate', '--noinput', verbosity=1)
+                print('✅ Migrations completed')
+                
+                # Create superuser
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                if not User.objects.filter(username='admin').exists():
+                    User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
+                    print('✅ Admin user created: admin / HammerAdmin2025!')
+                else:
+                    print('✅ Admin user already exists')
+                    
+            except Exception as migrate_error:
+                print(f'❌ Migration failed: {migrate_error}')
+                print('Continuing anyway - app will start but database may not work')
 except Exception as e:
     print(f'❌ Database error: {e}')
 "

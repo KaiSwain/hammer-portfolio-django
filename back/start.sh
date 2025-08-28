@@ -12,6 +12,7 @@ echo "Python version: $(python --version)"
 echo "Django version: $(python -c 'import django; print(django.get_version())')"
 echo "Port: $PORT"
 echo "Allowed hosts: $DJANGO_ALLOWED_HOSTS"
+echo "CSRF trusted origins: $CSRF_TRUSTED_ORIGINS"
 
 # Check PDF capabilities
 echo "Checking PDF generation capabilities..."

@@ -102,6 +102,20 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
+# CSRF Trusted Origins for production domains
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://localhost,https://127.0.0.1,https://portal.hammermath.com,https://hammermath-portal-vaa4g.ondigitalocean.app',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
+
+# Add DigitalOcean domains automatically if not already included
+if not any('.ondigitalocean.app' in origin for origin in CSRF_TRUSTED_ORIGINS):
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://*.ondigitalocean.app',  # Wildcard for all DigitalOcean app domains
+        'https://portal.hammermath.com',  # Custom domain
+    ])
+
 # Security Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

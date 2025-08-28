@@ -16,7 +16,7 @@ services:
     instance_size_slug: basic-xxs
     
     envs:
-      - key: DEBUG
+      - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_SETTINGS_MODULE
         value: "hammer_backendproject.settings"
@@ -34,6 +34,8 @@ services:
         value: "https://${hammer-frontend.PUBLIC_URL},https://${APP_DOMAIN}"
       - key: DATABASE_URL
         value: "${hammer-db.DATABASE_URL}"
+      - key: PORT
+        value: "8080"
     
     # Health check endpoint
     health_check:

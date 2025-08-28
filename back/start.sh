@@ -1,7 +1,16 @@
 #!/bin/bash
+set -e  # Exit on any error
 
 # Startup script for DigitalOcean deployment
 echo "Starting Django application..."
+
+# Set default port if not provided
+export PORT=${PORT:-8080}
+
+# Show environment info for debugging
+echo "Python version: $(python --version)"
+echo "Django version: $(python -c 'import django; print(django.get_version())')"
+echo "Port: $PORT"
 
 # Run database migrations
 echo "Running database migrations..."
@@ -15,5 +24,5 @@ else
 fi
 
 # Start the Gunicorn server
-echo "Starting Gunicorn server..."
-exec gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:$PORT
+echo "Starting Gunicorn server on port $PORT..."
+exec gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120

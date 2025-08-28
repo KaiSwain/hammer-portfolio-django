@@ -32,6 +32,10 @@ except ImportError as e:
 echo "Initializing database..."
 python manage.py init_db
 
+# Create superuser if it doesn't exist
+echo "Setting up admin user..."
+python manage.py create_superuser_auto
+
 # Start the Gunicorn server
 echo "Starting Gunicorn server on port $PORT..."
 exec gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120

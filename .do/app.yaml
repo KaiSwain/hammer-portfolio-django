@@ -44,9 +44,7 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
     
-    run_command: |
-      python manage.py migrate --noinput
-      gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:$PORT
+    run_command: ./start.sh
 
   # Frontend Next.js App
   - name: hammer-frontend
@@ -86,16 +84,3 @@ domains:
     type: PRIMARY
     wildcard: false
     zone: hammermath.com
-
-# Jobs for one-time tasks
-jobs:
-  - name: migrate
-    source_dir: /back
-    github:
-      repo: KaiSwain/hammer-portfolio-django
-      branch: phase1
-    run_command: python manage.py migrate
-    environment_slug: python
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    kind: PRE_DEPLOY

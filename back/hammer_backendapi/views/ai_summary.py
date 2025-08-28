@@ -24,8 +24,19 @@ from openai import OpenAI
 # Prints once at server start so you know this file is being used
 print("[AI] ai_summary loaded from:", __file__)
 
-client = OpenAI()  # reads OPENAI_API_KEY from env
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # default; we also support a fallback
+# Initialize OpenAI client lazily to avoid import-time errors
+client = None
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # default; we also support a fallback
+
+def get_openai_client():
+    """Get OpenAI client, initializing it if needed."""
+    global client
+    if client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        client = OpenAI(api_key=api_key)
+    return client
 
 # ======== Prompt (Option A: JSON with "html") ========
 INSTR = (
@@ -201,6 +212,8 @@ def _call_model(payload: Dict[str, Any], model_id: str):
     Call the Responses API. Some models (e.g., gpt-5-mini) may reject 'temperature',
     so we conditionally include it and also retry without it on specific errors.
     """
+    openai_client = get_openai_client()
+    
     base_args = dict(
         model=model_id,
         instructions=INSTR,
@@ -210,17 +223,17 @@ def _call_model(payload: Dict[str, Any], model_id: str):
 
     # If the chosen model is known to reject temperature, skip it
     if model_id in {"gpt-5-mini", "gpt-5-nano"}:
-        return client.responses.create(**base_args)
+        return openai_client.responses.create(**base_args)
 
     # Otherwise, include a light temperature
     try:
-        return client.responses.create(**base_args, temperature=0.2)
+        return openai_client.responses.create(**base_args, temperature=0.2)
     except Exception as e:
         # Auto-retry without temperature if the model complains about it
         msg = str(e)
         if "Unsupported parameter" in msg and "temperature" in msg:
             print("[AI] Retrying without temperature for model:", model_id)
-            return client.responses.create(**base_args)
+            return openai_client.responses.create(**base_args)
         raise
 
 def generate_long_summary_html(student) -> str:
@@ -232,6 +245,14 @@ def generate_long_summary_html(student) -> str:
     payload = {"name": student.full_name, "meta": build_meta(student)}
     print("[AI] Model:", MODEL)
     print("[AI] Payload:", payload)
+
+    # Check if OpenAI is available
+    try:
+        get_openai_client()
+    except ValueError as e:
+        print(f"[AI] OpenAI not available: {e}")
+        print("[AI] Using guaranteed one-page fallback content")
+        return _create_guaranteed_one_page_content(student.full_name)
 
     try:
         resp = _call_model(payload, MODEL)

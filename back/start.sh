@@ -29,11 +29,8 @@ except ImportError as e:
     print('❌ PyMuPDF not available:', e)
 "
 
-# Run database migrations with verbose output
-echo "Running database migrations..."
-echo "Database URL: ${DATABASE_URL:0:30}..." # Show first 30 chars for debugging
-
-# First, try to connect and show database info
+# Database connection check (without migrations)
+echo "Checking database connection..."
 python -c "
 import os
 import django
@@ -45,39 +42,16 @@ try:
         cursor.execute('SELECT version();')
         result = cursor.fetchone()
         print(f'✅ Database connected: PostgreSQL')
-        cursor.execute('SELECT current_user, current_database();')
-        user, db = cursor.fetchone()
-        print(f'✅ User: {user}, Database: {db}')
+        
+        # Check if tables exist
+        cursor.execute(\"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='auth_user';\")
+        count = cursor.fetchone()[0]
+        if count > 0:
+            print('✅ auth_user table exists')
+        else:
+            print('⚠️  auth_user table does not exist - migrations may not have run')
 except Exception as e:
-    print(f'❌ Database connection error: {e}')
-    print('Continuing anyway, server might work...')
-"
-
-# Initialize database
-echo "Step 1: Initializing database..."
-./init_database.sh
-
-# Create superuser with inline script (simpler than management command)
-echo "Step 2: Creating admin user..."
-python -c "
-import os
-import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
-django.setup()
-
-from django.contrib.auth import get_user_model
-User = get_user_model()
-
-try:
-    if User.objects.filter(username='admin').exists():
-        print('✅ Superuser admin already exists')
-    else:
-        User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
-        print('✅ Superuser admin created successfully')
-        print('🔑 Username: admin, Password: HammerAdmin2025!')
-except Exception as e:
-    print(f'❌ Could not create superuser: {e}')
-    print('This is expected if auth tables do not exist yet')
+    print(f'❌ Database error: {e}')
 "
 
 # Start the Gunicorn server

@@ -98,3 +98,41 @@ domains:
     type: PRIMARY
     wildcard: false
     zone: hammermath.com
+
+# Jobs for database initialization
+jobs:
+  - name: migrate-database
+    source_dir: /back
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    run_command: |
+      python manage.py migrate --noinput --verbosity=2
+      python -c "
+      import os
+      import django
+      os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
+      django.setup()
+      from django.contrib.auth import get_user_model
+      User = get_user_model()
+      if not User.objects.filter(username='admin').exists():
+          User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
+          print('Admin user created')
+      else:
+          print('Admin user already exists')
+      "
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    kind: PRE_DEPLOY
+    
+    envs:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "hammer_backendproject.settings"
+      - key: DJANGO_SECRET_KEY
+        type: SECRET
+        value: "your-secret-key-will-be-generated"
+      - key: DATABASE_URL
+        value: "${hammer-db.DATABASE_URL}"

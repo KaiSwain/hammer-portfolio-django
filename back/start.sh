@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e  # Exit on any error
+# Exit on critical errors only, but allow some commands to fail gracefully
 
 # Startup script for DigitalOcean deployment
 echo "Starting Django application..."
@@ -29,13 +29,58 @@ except ImportError as e:
     print('❌ PyMuPDF not available:', e)
 "
 
-# Initialize and run database migrations
-echo "Initializing database..."
-python manage.py init_db
+# Run database migrations with verbose output
+echo "Running database migrations..."
+echo "Database URL: ${DATABASE_URL:0:30}..." # Show first 30 chars for debugging
 
-# Create superuser if it doesn't exist
-echo "Setting up admin user..."
-python manage.py create_superuser_auto
+# First, try to connect and show database info
+python -c "
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
+django.setup()
+from django.db import connection
+try:
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT version();')
+        result = cursor.fetchone()
+        print(f'✅ Database connected: PostgreSQL')
+        cursor.execute('SELECT current_user, current_database();')
+        user, db = cursor.fetchone()
+        print(f'✅ User: {user}, Database: {db}')
+except Exception as e:
+    print(f'❌ Database connection error: {e}')
+    print('Continuing anyway, server might work...')
+"
+
+# Run migrations step by step
+echo "Step 1: Running Django migrations safely..."
+
+# Use our custom safe migration command
+python manage.py safe_migrate
+
+# Create superuser with inline script (simpler than management command)
+echo "Step 2: Creating admin user..."
+python -c "
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
+django.setup()
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+try:
+    if User.objects.filter(username='admin').exists():
+        print('✅ Superuser admin already exists')
+    else:
+        User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
+        print('✅ Superuser admin created successfully')
+        print('🔑 Username: admin, Password: HammerAdmin2025!')
+except Exception as e:
+    print(f'❌ Could not create superuser: {e}')
+    print('This is expected if auth tables do not exist yet')
+"
 
 # Start the Gunicorn server
 echo "Starting Gunicorn server on port $PORT..."

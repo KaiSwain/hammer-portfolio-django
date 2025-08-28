@@ -89,7 +89,7 @@ databases:
   - name: hammer-db
     engine: PG
     version: "15"
-    production: false  # Use development database for now to avoid permission issues
+    production: true  # Use production database with full permissions
     cluster_name: hammer-portfolio-db
 
 # Domain configuration

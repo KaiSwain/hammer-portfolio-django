@@ -1,0 +1,45 @@
+# DigitalOcean App Platform Configuration
+name: hammer-portfolio
+region: nyc1
+
+services:
+  - name: hammer-app
+    source_dir: /back
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8000
+    
+    envs:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "hammer_backendproject.settings"
+      - key: DJANGO_SECRET_KEY
+        type: SECRET
+        value: "your-secret-key-will-be-generated"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*.ondigitalocean.app,localhost,127.0.0.1"
+      - key: DATABASE_URL
+        value: "${hammer-db.DATABASE_URL}"
+      - key: PORT
+        value: "8000"
+    
+    health_check:
+      http_path: /admin/
+    
+    build_command: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    
+    run_command: ./start.sh
+
+databases:
+  - name: hammer-db
+    engine: PG
+    version: "15"
+    production: true
+    cluster_name: hammer-portfolio-db

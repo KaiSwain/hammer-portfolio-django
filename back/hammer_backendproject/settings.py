@@ -349,3 +349,16 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
+# Frontend Integration - Serve Next.js static files
+FRONTEND_BUILD_PATH = BASE_DIR.parent / 'front' / 'out'
+
+# Add frontend static files to Django's static files if they exist
+if FRONTEND_BUILD_PATH.exists():
+    STATICFILES_DIRS.append(FRONTEND_BUILD_PATH)
+    print(f"✅ Frontend build found at: {FRONTEND_BUILD_PATH}")
+else:
+    print(f"⚠️  Frontend build not found at: {FRONTEND_BUILD_PATH}")
+
+# Template configuration for serving index.html from Next.js build
+TEMPLATES[0]['DIRS'].append(str(FRONTEND_BUILD_PATH))
+

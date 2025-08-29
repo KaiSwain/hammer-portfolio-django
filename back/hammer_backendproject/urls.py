@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
+from django.conf import settings
 from rest_framework import routers
 from hammer_backendapi.views import login_user, StudentForeignKeyOptionsView
 from hammer_backendapi.views.students import StudentViewSet
@@ -33,8 +35,10 @@ urlpatterns = [
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     
+    # Serve Next.js frontend at root
+    path('', TemplateView.as_view(template_name='index.html')),
+    
     # Backward compatibility (remove in future versions)
-    path('', include(router.urls)),
     path('login', login_user),
     path("generate/all/", generate_all_certificates),
     path("generate/portfolio/", generate_portfolio_certificate),

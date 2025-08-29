@@ -5,7 +5,7 @@ name: hammer-portfolio
 region: nyc1
 
 services:
-  # Frontend Next.js App (Primary Service)
+  # Frontend Next.js App (Primary Web Service)
   - name: hammer-frontend
     source_dir: /front
     github:
@@ -16,26 +16,21 @@ services:
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs
+    http_port: 3000
     
     envs:
       - key: NODE_ENV
         value: "production"
       - key: NEXT_PUBLIC_API_URL
-        value: "https://${hammer-backend.PUBLIC_URL}"
+        value: "https://hammer-backend-vaa4g.ondigitalocean.app"
       - key: NEXT_PUBLIC_SITE_URL
         value: "https://portal.hammermath.com"
     
     # Health check for frontend
     health_check:
       http_path: /
-    
-    # Routes for the frontend
-    routes:
-      - path: /
-      - path: /students
-      - path: /login
 
-  # Backend Django API
+  # Backend Django API (Internal Service)
   - name: hammer-backend
     source_dir: /back
     github:
@@ -44,6 +39,7 @@ services:
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
+    http_port: 8000
     
     envs:
       - key: DJANGO_DEBUG
@@ -82,11 +78,6 @@ services:
     # Health check endpoint
     health_check:
       http_path: /admin/
-    
-    # Routes for the backend API
-    routes:
-      - path: /api
-      - path: /admin
     
     # Build and run commands
     build_command: |

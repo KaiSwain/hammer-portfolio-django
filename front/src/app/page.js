@@ -4,6 +4,8 @@ import Image from "next/image";
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
+      {/* TEMP DEBUG BANNER TO CONFIRM FRONTEND IS SERVING ROOT. REMOVE AFTER VERIFICATION. */}
+      <div className="bg-red-600 text-white text-center py-2 text-sm font-semibold">FRONTEND SERVED ✔ If you see this, routing works. Remove banner in page.js.</div>
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

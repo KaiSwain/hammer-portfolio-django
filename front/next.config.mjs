@@ -1,14 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Export static files for Django to serve
-  output: 'export',
+  // Production optimizations
+  output: 'standalone',
   
   // No basePath needed for subdomain deployment
   trailingSlash: true,
   
-  // Image optimization must be disabled for static export
+  // Image optimization
   images: {
-    unoptimized: true,
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',

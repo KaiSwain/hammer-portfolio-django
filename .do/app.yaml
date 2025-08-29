@@ -1,17 +1,38 @@
-# DigitalOcean App Platform Configuration
+# DigitalOcean App Platform - Simple Frontend-First Configuration
 name: hammer-portfolio
 region: nyc1
 
+# ONLY ONE WEB SERVICE - FRONTEND
 services:
-  - name: hammer-app
-    source_dir: /back
+  - name: frontend
+    source_dir: ./front
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    
+    envs:
+      - key: NODE_ENV
+        value: "production"
+      - key: BACKEND_INTERNAL_URL
+        value: "http://backend:8000"
+
+    build_command: npm ci && npm run build
+    run_command: npm start
+
+# BACKEND AS WORKER (NO HTTP TRAFFIC)
+workers:
+  - name: backend
+    source_dir: ./back
     github:
       repo: KaiSwain/hammer-portfolio-django
       branch: phase1
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
-    http_port: 8000
     
     envs:
       - key: DJANGO_DEBUG
@@ -21,27 +42,42 @@ services:
       - key: DJANGO_SECRET_KEY
         type: SECRET
         value: "your-secret-key-will-be-generated"
-      - key: DJANGO_ALLOWED_HOSTS
-        value: "*.ondigitalocean.app,localhost,127.0.0.1"
+      - key: ALLOWED_HOSTS
+        value: "*"
       - key: DATABASE_URL
-        value: "${hammer-db.DATABASE_URL}"
-      - key: PORT
-        value: "8000"
-    
-    health_check:
-      http_path: /admin/
+        value: "${db.DATABASE_URL}"
     
     build_command: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
     
-    run_command: ./start.sh
+    run_command: gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:8000 --workers 2
 
+# DATABASE
 databases:
-  - name: hammer-db
+  - name: db
     engine: PG
     version: "15"
     production: true
-    cluster_name: hammer-portfolio-db
-# Force deployment
-# EMERGENCY FIX Fri Aug 29 12:35:47 CDT 2025
+
+# MIGRATION JOB
+jobs:
+  - name: migrate
+    source_dir: ./back
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    run_command: python manage.py migrate --noinput
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    kind: PRE_DEPLOY
+    
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: "hammer_backendproject.settings"
+      - key: DJANGO_SECRET_KEY
+        type: SECRET
+        value: "your-secret-key-will-be-generated"
+      - key: DATABASE_URL
+        value: "${db.DATABASE_URL}"

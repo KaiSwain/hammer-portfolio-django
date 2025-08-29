@@ -1,5 +1,7 @@
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// In production we rely on same-origin routing: frontend at /, backend mounted at /api
+// So we just call relative /api paths. For local dev you can still set NEXT_PUBLIC_API_URL.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const API_URL = `${API_BASE_URL}/api`;
 
 // Get token from localStorage

@@ -22,9 +22,9 @@ services:
       - key: NODE_ENV
         value: "production"
       - key: NEXT_PUBLIC_API_URL
-        value: "https://hammer-backend-vaa4g.ondigitalocean.app"
+        value: "https://${hammer-backend.PUBLIC_URL}"
       - key: NEXT_PUBLIC_SITE_URL
-        value: "https://portal.hammermath.com"
+        value: "https://${hammer-frontend.PUBLIC_URL}"
     
     # Health check for frontend
     health_check:
@@ -117,13 +117,6 @@ databases:
     version: "15"
     production: true  # Use production database with full permissions
     cluster_name: hammer-portfolio-db
-
-# Domain configuration
-domains:
-  - domain: portal.hammermath.com
-    type: PRIMARY
-    wildcard: false
-    zone: hammermath.com
 
 # Jobs for database initialization
 jobs:

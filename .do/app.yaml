@@ -5,6 +5,36 @@ name: hammer-portfolio
 region: nyc1
 
 services:
+  # Frontend Next.js App (Primary Service)
+  - name: hammer-frontend
+    source_dir: /front
+    github:
+      repo: KaiSwain/hammer-portfolio-django
+      branch: phase1
+    build_command: npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    envs:
+      - key: NODE_ENV
+        value: "production"
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://${hammer-backend.PUBLIC_URL}"
+      - key: NEXT_PUBLIC_SITE_URL
+        value: "https://portal.hammermath.com"
+    
+    # Health check for frontend
+    health_check:
+      http_path: /
+    
+    # Routes for the frontend
+    routes:
+      - path: /
+      - path: /students
+      - path: /login
+
   # Backend Django API
   - name: hammer-backend
     source_dir: /back
@@ -52,6 +82,11 @@ services:
     # Health check endpoint
     health_check:
       http_path: /admin/
+    
+    # Routes for the backend API
+    routes:
+      - path: /api
+      - path: /admin
     
     # Build and run commands
     build_command: |

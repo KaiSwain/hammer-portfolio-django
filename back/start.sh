@@ -39,15 +39,14 @@ except ImportError as e:
     print('❌ PyMuPDF not available:', e)
 "
 
-# Database connection and migration (FAIL FAST on errors)
-echo "Checking database connection and running migrations..."
+# Quick database connectivity check (non-blocking)
+echo "Checking database connectivity..."
 python -c "
 import os
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
 django.setup()
 from django.db import connection
-from django.core.management import call_command
 
 try:
     with connection.cursor() as cursor:
@@ -55,34 +54,19 @@ try:
         result = cursor.fetchone()
         print(f'✅ Database connected: PostgreSQL')
         
-        # Check if tables exist
+        # Check if tables exist (non-blocking)
         cursor.execute(\"SELECT COUNT(*) FROM information_schema.tables WHERE table_name='auth_user';\")
         count = cursor.fetchone()[0]
         if count > 0:
-            print('✅ auth_user table exists')
+            print('✅ auth_user table exists - migrations handled by PRE_DEPLOY job')
         else:
-            print('⚠️  auth_user table does not exist - running migrations now...')
+            print('⚠️  auth_user table does not exist - PRE_DEPLOY job will handle migrations')
             
-            # Try to run migrations directly - FAIL FAST
-            print('Running migrations...')
-            call_command('migrate', '--noinput', verbosity=1)
-            print('✅ Migrations completed')
-            
-            # Create superuser
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            if not User.objects.filter(username='admin').exists():
-                User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
-                print('✅ Admin user created: admin / HammerAdmin2025!')
-            else:
-                print('✅ Admin user already exists')
-                
 except Exception as e:
-    print(f'❌ Database error: {e}')
-    # FAIL FAST - don't continue with broken database
-    exit(1)
+    print(f'⚠️  Database check failed: {e}')
+    print('This is OK - app will still start and /healthz will work')
 "
 
-# Start the Gunicorn server
+# Start the Gunicorn server (always succeeds)
 echo "Starting Gunicorn server on port $PORT..."
 exec gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120

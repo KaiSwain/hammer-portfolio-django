@@ -1,5 +1,61 @@
 # COACH HELP - DigitalOcean Deployment Issues
 
+## 🛠️ LATEST CHANGES IMPLEMENTED (Aug 29, 2025)
+
+### ✅ **STEP 1: Added Explicit Routes**
+```yaml
+# Frontend service routes
+routes:
+  - path: /
+  - path: /_next(/.*)?
+  - path: /static(/.*)?
+
+# Backend service routes  
+routes:
+  - path: /api(/.*)?
+  - path: /admin(/.*)?
+  - path: /media(/.*)?
+```
+
+### ✅ **STEP 2: Fixed Frontend PORT Binding**
+```json
+// front/package.json - Changed to:
+"start": "next start -p $PORT"
+```
+
+### ✅ **STEP 3: Fixed Django Environment Variable Names**
+```yaml
+# Changed from:
+DJANGO_ALLOWED_HOSTS → ALLOWED_HOSTS  
+DJANGO_CSRF_TRUSTED_ORIGINS → CSRF_TRUSTED_ORIGINS
+```
+
+### ✅ **STEP 4: Simplified Health Check**
+```yaml
+# Changed from /admin/ to:
+health_check:
+  http_path: /health/
+```
+
+## ❌ **CURRENT ISSUES (Still Happening After Changes)**
+
+### 1. **Environment Variables NOT Loading**
+Backend logs show:
+```
+Allowed hosts: (empty)
+CSRF trusted origins: (empty)
+```
+
+### 2. **Main Domain Still Shows Django API**
+- Expected: Next.js frontend at https://hammermath-portal-vaa4g.ondigitalocean.app/
+- Actual: Django API still appears at root domain
+- Explicit routes didn't work
+
+### 3. **Database Permissions Still Failing**
+```
+❌ Migration failed: permission denied for schema public
+```
+
 ## PROBLEM SUMMARY
 Student is trying to deploy a Next.js frontend + Django backend on DigitalOcean App Platform. The frontend is NOT showing up at the main URL - instead, the Django API is appearing at https://hammermath-portal-vaa4g.ondigitalocean.app/
 

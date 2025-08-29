@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.http import HttpResponse
 from rest_framework import routers
 from hammer_backendapi.views import login_user, StudentForeignKeyOptionsView
 from hammer_backendapi.views.students import StudentViewSet
@@ -7,6 +8,10 @@ from hammer_backendapi.views.certificates import generate_workforce_certificate,
 from hammer_backendapi.views.generate_all import generate_all_certificates
 from hammer_backendapi.views.health import health_check, api_info
 from hammer_backendapi.views.support import support_request
+
+# Simple health check that doesn't touch DB
+def healthz(_):
+    return HttpResponse("ok")
 
 router = routers.DefaultRouter(trailing_slash=True)  # Enable trailing slashes
 router.register(r"students", StudentViewSet, "student")
@@ -32,6 +37,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
+    path('healthz', healthz),  # Simple health check for DigitalOcean
     
     # Backward compatibility (remove in future versions)
     path('', include(router.urls)),

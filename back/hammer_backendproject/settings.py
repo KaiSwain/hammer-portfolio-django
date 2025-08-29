@@ -1,16 +1,12 @@
-from decouple import config
+from decouple import AutoConfig
 from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-# This is crucial for development - it loads .env.development automatically
-env_file = BASE_DIR / '.env.development'
-if env_file.exists():
-    from decouple import Config, RepositoryEnv
-    config = Config(RepositoryEnv(env_file))
+# Use AutoConfig to read OS env first, then .env files as fallback
+config = AutoConfig(search_path=BASE_DIR)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb')
@@ -28,7 +24,10 @@ if OPENAI_API_KEY:
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
 # Production-ready allowed hosts configuration
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = [s.strip() for s in config(
+    'ALLOWED_HOSTS', 
+    default='localhost,127.0.0.1'
+).split(',') if s.strip()]
 
 # Add DigitalOcean App Platform domains automatically if not already included
 if not any('.ondigitalocean.app' in host for host in ALLOWED_HOSTS):
@@ -102,19 +101,15 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-# CSRF Trusted Origins for production domains
-CSRF_TRUSTED_ORIGINS = config(
+# CSRF Trusted Origins for production domains (NO WILDCARDS ALLOWED)
+CSRF_TRUSTED_ORIGINS = [s.strip() for s in config(
     'CSRF_TRUSTED_ORIGINS',
-    default='https://localhost,https://127.0.0.1,https://portal.hammermath.com,https://hammermath-portal-vaa4g.ondigitalocean.app',
-    cast=lambda v: [s.strip() for s in v.split(',')]
-)
+    default='https://localhost,https://127.0.0.1'
+).split(',') if s.strip()]
 
-# Add DigitalOcean domains automatically if not already included
-if not any('.ondigitalocean.app' in origin for origin in CSRF_TRUSTED_ORIGINS):
-    CSRF_TRUSTED_ORIGINS.extend([
-        'https://*.ondigitalocean.app',  # Wildcard for all DigitalOcean app domains
-        'https://portal.hammermath.com',  # Custom domain
-    ])
+# Log the computed settings for verification
+print("Allowed hosts:", ALLOWED_HOSTS)
+print("CSRF trusted origins:", CSRF_TRUSTED_ORIGINS)
 
 # Security Middleware
 MIDDLEWARE = [

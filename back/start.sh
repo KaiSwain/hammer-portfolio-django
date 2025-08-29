@@ -1,5 +1,6 @@
 #!/bin/bash
-# Exit on critical errors only, but allow some commands to fail gracefully
+# Exit on critical errors (fail fast)
+set -e
 
 # Startup script for DigitalOcean deployment
 echo "Starting Django application..."
@@ -11,8 +12,17 @@ export PORT=${PORT:-8080}
 echo "Python version: $(python --version)"
 echo "Django version: $(python -c 'import django; print(django.get_version())')"
 echo "Port: $PORT"
-echo "Allowed hosts: $DJANGO_ALLOWED_HOSTS"
-echo "CSRF trusted origins: $CSRF_TRUSTED_ORIGINS"
+
+# Read Django settings to verify environment variables
+echo "Reading Django settings..."
+python - <<'PY'
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings')
+django.setup()
+from django.conf import settings
+print("ALLOWED_HOSTS (settings):", settings.ALLOWED_HOSTS)
+print("CSRF_TRUSTED_ORIGINS (settings):", settings.CSRF_TRUSTED_ORIGINS)
+PY
 
 # Check PDF capabilities
 echo "Checking PDF generation capabilities..."
@@ -29,7 +39,7 @@ except ImportError as e:
     print('❌ PyMuPDF not available:', e)
 "
 
-# Database connection and migration
+# Database connection and migration (FAIL FAST on errors)
 echo "Checking database connection and running migrations..."
 python -c "
 import os
@@ -53,26 +63,24 @@ try:
         else:
             print('⚠️  auth_user table does not exist - running migrations now...')
             
-            # Try to run migrations directly
-            try:
-                print('Running migrations...')
-                call_command('migrate', '--noinput', verbosity=1)
-                print('✅ Migrations completed')
+            # Try to run migrations directly - FAIL FAST
+            print('Running migrations...')
+            call_command('migrate', '--noinput', verbosity=1)
+            print('✅ Migrations completed')
+            
+            # Create superuser
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            if not User.objects.filter(username='admin').exists():
+                User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
+                print('✅ Admin user created: admin / HammerAdmin2025!')
+            else:
+                print('✅ Admin user already exists')
                 
-                # Create superuser
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
-                if not User.objects.filter(username='admin').exists():
-                    User.objects.create_superuser('admin', 'admin@hammermath.com', 'HammerAdmin2025!')
-                    print('✅ Admin user created: admin / HammerAdmin2025!')
-                else:
-                    print('✅ Admin user already exists')
-                    
-            except Exception as migrate_error:
-                print(f'❌ Migration failed: {migrate_error}')
-                print('Continuing anyway - app will start but database may not work')
 except Exception as e:
     print(f'❌ Database error: {e}')
+    # FAIL FAST - don't continue with broken database
+    exit(1)
 "
 
 # Start the Gunicorn server

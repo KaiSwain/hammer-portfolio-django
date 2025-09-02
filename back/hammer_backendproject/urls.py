@@ -32,8 +32,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
-    
-    # Redirect root to API info
-    path('', api_info),
+    path('', api_info),  # Root API info - this should NOT interfere with admin/
 ]
 

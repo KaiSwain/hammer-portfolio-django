@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.http import HttpResponse
 from rest_framework import routers
 from hammer_backendapi.views import login_user, StudentForeignKeyOptionsView
@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     
-    # Root URL - EXACT MATCH ONLY using $ anchor
-    re_path(r'^$', api_info, name='api_info'),
+    # Root URL - only matches exactly empty string, not admin/
+    path('', api_info, name='api_info'),
 ]
 

@@ -45,9 +45,12 @@ services:
     routes:
       - path: /api
       - path: /admin
+      - path: /admin/
       - path: /health
+      - path: /health/
       - path: /media
       - path: /test-django
+      - path: /test-django/
     
     health_check:
       http_path: /health/

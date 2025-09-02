@@ -8,7 +8,7 @@ services:
     source_dir: ./front
     github:
       repo: KaiSwain/hammer-portfolio-django
-      branch: phase1
+      branch: main
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs
@@ -29,7 +29,7 @@ workers:
     source_dir: ./back
     github:
       repo: KaiSwain/hammer-portfolio-django
-      branch: phase1
+      branch: main
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs

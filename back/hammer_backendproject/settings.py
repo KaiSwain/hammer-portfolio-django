@@ -27,9 +27,37 @@ if OPENAI_API_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
+# Enable more verbose logging for debugging 400 errors
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'WARNING',
+            'propagate': True,
+        },
+        'django.security.DisallowedHost': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
 # Production-ready allowed hosts configuration
 # Support both ALLOWED_HOSTS and DJANGO_ALLOWED_HOSTS for flexibility
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1'), cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS_STR = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,*.ondigitalocean.app,hammer-portfolio-django-back-xblzb.ondigitalocean.app'))
+ALLOWED_HOSTS = [s.strip() for s in ALLOWED_HOSTS_STR.split(',')] if ALLOWED_HOSTS_STR else ['*']
+
+# Add wildcard for DigitalOcean if in production
+if not DEBUG:
+    ALLOWED_HOSTS.extend(['*.ondigitalocean.app', '*'])
 
 
 # Application definition
@@ -72,11 +100,18 @@ CORS_ALLOWED_ORIGINS = config(
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF trusted origins for production
-CSRF_TRUSTED_ORIGINS = config(
+CSRF_TRUSTED_ORIGINS_STR = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+    default='http://localhost:3000,http://127.0.0.1:3000,https://*.ondigitalocean.app,https://hammer-portfolio-django-back-xblzb.ondigitalocean.app'
 )
+CSRF_TRUSTED_ORIGINS = [s.strip() for s in CSRF_TRUSTED_ORIGINS_STR.split(',')] if CSRF_TRUSTED_ORIGINS_STR else []
+
+# Add DigitalOcean domains if in production
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://*.ondigitalocean.app',
+        'http://*.ondigitalocean.app'
+    ])
 
 # Additional CORS settings for better compatibility
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development only

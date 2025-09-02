@@ -15,9 +15,14 @@ pip install -r requirements.txt
 echo "Collecting static files..."
 python manage.py collectstatic --noinput || echo "Static collection failed, continuing..."
 
-# Run migrations
+# Run migrations with better error handling
 echo "Running database migrations..."
-python manage.py migrate --noinput || echo "Migration failed, continuing..."
+if python manage.py showmigrations | grep -q "\[ \]"; then
+    echo "Unapplied migrations found, attempting to migrate..."
+    python manage.py migrate --noinput || echo "Migration failed - may need manual database setup"
+else
+    echo "No pending migrations or migration check failed"
+fi
 
 # Use PORT environment variable if set, otherwise default to 8000
 PORT=${PORT:-8000}

@@ -27,29 +27,6 @@ if OPENAI_API_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
-# Enable more verbose logging for debugging 400 errors
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'DEBUG' if DEBUG else 'WARNING',
-            'propagate': True,
-        },
-        'django.security.DisallowedHost': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    },
-}
-
 # Production-ready allowed hosts configuration
 # Support both ALLOWED_HOSTS and DJANGO_ALLOWED_HOSTS for flexibility
 ALLOWED_HOSTS_STR = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,*.ondigitalocean.app,hammer-portfolio-django-back-xblzb.ondigitalocean.app'))

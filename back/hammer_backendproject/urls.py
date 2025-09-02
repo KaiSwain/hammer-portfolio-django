@@ -33,16 +33,7 @@ urlpatterns = [
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     
-    # Backward compatibility (remove in future versions)
-    path('', include(router.urls)),
-    path('login', login_user),
-    path("generate/all/", generate_all_certificates),
-    path("generate/portfolio/", generate_portfolio_certificate),
-    path("generate/nccer/", generate_nccer_certificate),
-    path("generate/osha/", generate_osha_certificate),
-    path("generate/hammermath/", generate_hammermath_certificate),
-    path("generate/employability/", generate_employability_certificate),
-    path("generate/workforce/", generate_workforce_certificate),
-    path("details/", StudentForeignKeyOptionsView.as_view()),
+    # Redirect root to API info
+    path('', api_info),
 ]
 

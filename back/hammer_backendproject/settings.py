@@ -172,40 +172,70 @@ TEMPLATES = [
 WSGI_APPLICATION = 'hammer_backendproject.wsgi.application'
 
 
-# Database Configuration - Environment based
+# Database Configuration - Environment based with enhanced security
 DATABASE_URL = config('DATABASE_URL', default='')
-if DATABASE_URL:
-    try:
-        import dj_database_url
-        DATABASES = {
-            'default': dj_database_url.parse(DATABASE_URL)
-        }
-    except ImportError:
-        # Fallback to manual parsing if dj_database_url is not available
-        # This is a simple parser for postgresql:// URLs
-        import urllib.parse as urlparse
-        url = urlparse.urlparse(DATABASE_URL)
-        DATABASES = {
+
+def get_database_config():
+    """Configure database with proper permissions and security settings"""
+    if DATABASE_URL:
+        try:
+            import dj_database_url
+            db_config = dj_database_url.parse(DATABASE_URL)
+            
+            # Add DigitalOcean specific optimizations and security
+            db_config.update({
+                'OPTIONS': {
+                    'sslmode': 'require',  # Force SSL for security
+                    'connect_timeout': 30,
+                    'options': '-c default_transaction_isolation=read_committed'
+                },
+                'CONN_MAX_AGE': 600,  # Connection pooling for performance
+                'CONN_HEALTH_CHECKS': True,  # Automatic connection health checks
+            })
+            
+            # Use admin user for migrations if available
+            admin_user = config('DATABASE_ADMIN_USER', default=None)
+            if admin_user and not DEBUG:
+                db_config['USER'] = admin_user
+                
+            return {'default': db_config}
+            
+        except ImportError:
+            # Fallback to manual parsing if dj_database_url is not available
+            import urllib.parse as urlparse
+            url = urlparse.urlparse(DATABASE_URL)
+            return {
+                'default': {
+                    'ENGINE': 'django.db.backends.postgresql',
+                    'NAME': url.path[1:],
+                    'USER': config('DATABASE_ADMIN_USER', default=url.username),
+                    'PASSWORD': url.password,
+                    'HOST': url.hostname,
+                    'PORT': url.port,
+                    'OPTIONS': {
+                        'sslmode': 'require',
+                        'connect_timeout': 30,
+                    },
+                    'CONN_MAX_AGE': 600,
+                }
+            }
+    else:
+        return {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': url.path[1:],
-                'USER': url.username,
-                'PASSWORD': url.password,
-                'HOST': url.hostname,
-                'PORT': url.port,
+                'NAME': config('DB_NAME', default='hammer_portfolio'),
+                'USER': config('DB_USER', default='postgres'),
+                'PASSWORD': config('DB_PASSWORD', default='password'),
+                'HOST': config('DB_HOST', default='localhost'),
+                'PORT': config('DB_PORT', default='5432'),
+                'OPTIONS': {
+                    'connect_timeout': 30,
+                },
+                'CONN_MAX_AGE': 300,
             }
         }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='hammer_portfolio'),
-            'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default='password'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
-    }
+
+DATABASES = get_database_config()
 
 
 # Password validation

@@ -11,9 +11,9 @@ echo "System dependencies require root - WeasyPrint will be disabled for now"
 echo "Installing Python packages..."
 pip install -r requirements.txt
 
-# Collect static files
+# Collect static files with better error handling
 echo "Collecting static files..."
-python manage.py collectstatic --noinput || echo "Static collection failed, continuing..."
+python manage.py collectstatic --noinput --clear || echo "Static collection failed, continuing..."
 
 # Run migrations with better error handling
 echo "Running database migrations..."

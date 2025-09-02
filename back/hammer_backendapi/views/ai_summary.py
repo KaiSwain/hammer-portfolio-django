@@ -18,13 +18,27 @@ Implementation notes:
 
 import os
 import json
+import os
 from typing import Any, Dict
 from openai import OpenAI
 
 # Prints once at server start so you know this file is being used
 print("[AI] ai_summary loaded from:", __file__)
 
-client = OpenAI()  # reads OPENAI_API_KEY from env
+# Initialize OpenAI client safely
+try:
+    # Create client with minimal configuration to avoid proxy issues
+    api_key = os.getenv("OPENAI_API_KEY")
+    if api_key:
+        client = OpenAI(api_key=api_key)
+        print("[AI] OpenAI client initialized successfully")
+    else:
+        print("[AI] Warning: OPENAI_API_KEY not found in environment")
+        client = None
+except Exception as e:
+    print(f"[AI] Warning: OpenAI client initialization failed: {e}")
+    client = None
+
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # Use gpt-5-mini as preferred model
 
 # ======== Prompt (Option A: JSON with "html") ========
@@ -71,10 +85,11 @@ def build_meta(student) -> Dict[str, Any]:
 def _safe_extract_html(resp) -> str:
     """
     Parse the model's JSON safely; never crash the view if it misformats.
-    The Responses API exposes text via resp.output_text.
+    The Chat Completions API exposes text via resp.choices[0].message.content.
     """
     try:
-        raw = (resp.output_text or "").strip()
+        # Extract content from chat completion response
+        raw = resp.choices[0].message.content.strip() if resp.choices else ""
         print(f"[AI] Raw response: {raw[:500]}...")  # Debug: show first 500 chars
         
         # Try to extract JSON even if there's extra text
@@ -225,29 +240,40 @@ def _create_guaranteed_one_page_content(student_name: str) -> str:
 
 def _call_model(payload: Dict[str, Any], model_id: str):
     """
-    Call the Responses API. Some models (e.g., gpt-5-mini) may reject 'temperature',
+    Call the OpenAI Chat Completions API. Some models (e.g., gpt-5-mini) may reject 'temperature',
     so we conditionally include it and also retry without it on specific errors.
     """
+    if client is None:
+        raise Exception("OpenAI client is not initialized. Check OPENAI_API_KEY environment variable.")
+    
+    # Format the input as a system message and user message
+    system_message = INSTR
+    user_message = json.dumps(payload)
+    
+    messages = [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message}
+    ]
+    
     base_args = dict(
         model=model_id,
-        instructions=INSTR,
-        input=json.dumps(payload),
-        max_output_tokens=3000,  # Increased from 1500 to allow for more detailed summaries
+        messages=messages,
+        max_tokens=3000,  # Use max_tokens instead of max_output_tokens
     )
 
     # If the chosen model is known to reject temperature, skip it
     if model_id in {"gpt-5-mini", "gpt-5-nano"}:
-        return client.responses.create(**base_args)
+        return client.chat.completions.create(**base_args)
 
     # Otherwise, include a light temperature
     try:
-        return client.responses.create(**base_args, temperature=0.2)
+        return client.chat.completions.create(**base_args, temperature=0.2)
     except Exception as e:
         # Auto-retry without temperature if the model complains about it
         msg = str(e)
         if "Unsupported parameter" in msg and "temperature" in msg:
             print("[AI] Retrying without temperature for model:", model_id)
-            return client.responses.create(**base_args)
+            return client.chat.completions.create(**base_args)
         raise
 
 def generate_long_summary_html(student) -> str:

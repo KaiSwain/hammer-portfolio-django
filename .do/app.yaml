@@ -45,11 +45,12 @@ services:
     routes:
       - path: /api
       - path: /admin
-      - path: /healthz
+      - path: /health
       - path: /media
+      - path: /test-django
     
     health_check:
-      http_path: /healthz
+      http_path: /health/
 
 databases:
   - name: hammer-db
@@ -62,7 +63,7 @@ jobs:
     source_dir: ./back
     github:
       repo: KaiSwain/hammer-portfolio-django
-      branch: phase1
+      branch: main
     run_command: python manage.py migrate --noinput
     environment_slug: python
     instance_count: 1

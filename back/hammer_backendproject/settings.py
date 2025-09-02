@@ -194,8 +194,16 @@ def get_database_config():
             
             # Use admin user for migrations if available
             admin_user = config('DATABASE_ADMIN_USER', default=None)
-            if admin_user and not DEBUG:
-                db_config['USER'] = admin_user
+            admin_password = config('DATABASE_ADMIN_PASSWORD', default=None)
+            migration_user = config('DATABASE_MIGRATION_USER', default=admin_user)
+            
+            if migration_user:
+                db_config['USER'] = migration_user
+                if admin_password:
+                    db_config['PASSWORD'] = admin_password
+                print(f"[DB] Using privileged user for database operations: {migration_user}")
+            elif not DEBUG:
+                print(f"[DB] Warning: Using restricted user, migrations may fail")
                 
             return {'default': db_config}
             

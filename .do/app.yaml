@@ -32,9 +32,9 @@ services:
         type: SECRET
         value: "your-secret-key-will-be-generated"
       - key: ALLOWED_HOSTS
-        value: "hammermath-portal-vaa4g.ondigitalocean.app,localhost,127.0.0.1"
+        value: "hammer-app-hk3st.ondigitalocean.app,localhost,127.0.0.1"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://hammermath-portal-vaa4g.ondigitalocean.app,https://your-vercel-domain.vercel.app"
+        value: "https://hammer-app-hk3st.ondigitalocean.app,https://your-vercel-domain.vercel.app"
       - key: CORS_ALLOWED_ORIGINS
         value: "https://your-vercel-domain.vercel.app"
       - key: DATABASE_URL

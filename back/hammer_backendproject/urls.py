@@ -34,7 +34,6 @@ api_patterns = [
 
 urlpatterns = [
     path('test-django/', test_view),  # Test if Django routing works at all
-    path('django-admin/', admin.site.urls),  # Move admin to different URL
     path('admin/', admin.site.urls),  # Django admin interface
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers

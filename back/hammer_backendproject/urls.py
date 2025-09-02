@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     
-    # Root URL - only matches exactly empty string, not admin/
-    path('', api_info, name='api_info'),
+    # Temporarily removed root URL to debug routing issue
+    # path('', api_info, name='api_info'),
 ]
 

@@ -25,7 +25,7 @@ from openai import OpenAI
 print("[AI] ai_summary loaded from:", __file__)
 
 client = OpenAI()  # reads OPENAI_API_KEY from env
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # default; we also support a fallback
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # Use gpt-5-mini as preferred model
 
 # ======== Prompt (Option A: JSON with "html") ========
 INSTR = (
@@ -82,7 +82,17 @@ def _safe_extract_html(resp) -> str:
             start = raw.find('{')
             end = raw.rfind('}') + 1
             json_str = raw[start:end]
-            print(f"[AI] Extracted JSON: {json_str[:200]}...")  # Debug
+            
+            # Enhanced cleanup for gpt-5-mini JSON formatting issues
+            import re
+            # Remove control characters that break JSON parsing
+            json_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', json_str)
+            # Fix common JSON issues: unescaped quotes, newlines, etc.
+            json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+            # Handle unescaped quotes in content (preserve structure)
+            # This is more complex - let's try a simpler approach first
+            
+            print(f"[AI] Cleaned JSON: {json_str[:200]}...")  # Debug
             
             data = json.loads(json_str)
             html = data.get("html")
@@ -93,6 +103,23 @@ def _safe_extract_html(resp) -> str:
         print("[AI] JSON missing 'html' key or empty. Raw:", raw[:300])
     except json.JSONDecodeError as e:
         print(f"[AI] JSON parse error: {e}")
+        print(f"[AI] Attempting manual HTML extraction...")
+        
+        # Fallback: try to extract HTML content manually if JSON parsing fails
+        try:
+            raw = (resp.output_text or "").strip()
+            # Look for content between "html":" and the closing quote/brace
+            import re
+            html_match = re.search(r'"html"\s*:\s*"(.*?)(?="\s*})', raw, re.DOTALL)
+            if html_match:
+                html_content = html_match.group(1)
+                # Unescape basic characters
+                html_content = html_content.replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
+                print(f"[AI] Manual extraction successful, length: {len(html_content)}")
+                return html_content
+        except Exception as manual_e:
+            print(f"[AI] Manual extraction failed: {manual_e}")
+            
         print(f"[AI] Problematic JSON: {raw[:500] if raw else 'Empty response'}")
     except Exception as e:
         print(f"[AI] Unexpected error: {e}")

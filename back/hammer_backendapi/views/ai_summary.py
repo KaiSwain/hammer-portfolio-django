@@ -25,11 +25,12 @@ from openai import OpenAI
 # Prints once at server start so you know this file is being used
 print("[AI] ai_summary loaded from:", __file__)
 
-# Initialize OpenAI client safely
+# Initialize OpenAI client safely - Don't fail on import
 try:
     # Create client with minimal configuration to avoid proxy issues
     api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
+        # Use simpler initialization to avoid version compatibility issues
         client = OpenAI(api_key=api_key)
         print("[AI] OpenAI client initialized successfully")
     else:
@@ -37,6 +38,7 @@ try:
         client = None
 except Exception as e:
     print(f"[AI] Warning: OpenAI client initialization failed: {e}")
+    # Don't fail the import - just set client to None
     client = None
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # Use gpt-5-mini as preferred model

@@ -187,7 +187,6 @@ def get_database_config():
                 'OPTIONS': {
                     'sslmode': 'require',  # Force SSL for security
                     'connect_timeout': 30,
-                    'options': '-c default_transaction_isolation=read_committed'
                 },
                 'CONN_MAX_AGE': 600,  # Connection pooling for performance
                 'CONN_HEALTH_CHECKS': True,  # Automatic connection health checks

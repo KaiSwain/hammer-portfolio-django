@@ -33,8 +33,8 @@ api_patterns = [
 ]
 
 urlpatterns = [
+    path('admin/', admin.site.urls),  # Django admin interface - MOVED TO TOP
     path('test-django/', test_view),  # Test if Django routing works at all
-    path('admin/', admin.site.urls),  # Django admin interface
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     

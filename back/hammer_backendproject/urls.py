@@ -10,7 +10,7 @@ from hammer_backendapi.views.health import health_check, api_info
 from hammer_backendapi.views.support import support_request
 
 def test_view(request):
-    return HttpResponse("TEST VIEW WORKING - Django URLs are functional (Updated Sep 2)", content_type="text/plain")
+    return HttpResponse("TEST VIEW WORKING - Django URLs functional with MAIN branch (Sep 2)", content_type="text/plain")
 
 router = routers.DefaultRouter(trailing_slash=True)  # Enable trailing slashes
 router.register(r"students", StudentViewSet, "student")

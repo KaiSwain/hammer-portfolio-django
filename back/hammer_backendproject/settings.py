@@ -16,18 +16,20 @@ if env_file.exists():
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb')
 
 # OpenAI Configuration
-OPENAI_API_KEY = config("OPENAI_API_KEY")
+OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
 OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
 
 # Set OpenAI API key in environment for the openai library
 # This is important because the OpenAI client reads from os.environ
-os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+if OPENAI_API_KEY:
+    os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
 # Production-ready allowed hosts configuration
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+# Support both ALLOWED_HOSTS and DJANGO_ALLOWED_HOSTS for flexibility
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1'), cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -68,6 +70,13 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF trusted origins for production
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # Additional CORS settings for better compatibility
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development only

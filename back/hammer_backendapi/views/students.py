@@ -14,7 +14,16 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 from .ai_summary import generate_long_summary_html          # << key import
-from .utils import html_to_pdf_bytes                        # << pdf helper
+# Remove module-level PDF import to avoid WeasyPrint startup issues
+# from .utils import html_to_pdf_bytes                        # << pdf helper
+
+def _get_html_to_pdf_converter():
+    """Lazy import of HTML to PDF converter to avoid WeasyPrint startup issues"""
+    try:
+        from hammer_backendapi.views.utils import html_to_pdf_bytes
+        return html_to_pdf_bytes
+    except ImportError as e:
+        raise RuntimeError(f"PDF generation not available: {e}")
 
 class StudentViewSet(ModelViewSet):
     """
@@ -74,6 +83,7 @@ class StudentViewSet(ModelViewSet):
         html = render_to_string("personality_summary.html", context)
 
         # 3) Convert HTML → PDF
+        html_to_pdf_bytes = _get_html_to_pdf_converter()
         pdf_bytes = html_to_pdf_bytes(html, base_url=request.build_absolute_uri("/"))
 
         # 4) Return the PDF as a download

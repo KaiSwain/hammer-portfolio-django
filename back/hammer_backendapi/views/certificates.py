@@ -1,9 +1,16 @@
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from hammer_backendapi.views.utils.pdf_utils import generate_certificate_pdf
 
 TEMPLATE_PATH = "static/Certificates_Master.pdf"
+
+def _get_pdf_generator():
+    """Lazy import of PDF generator to avoid WeasyPrint startup issues"""
+    try:
+        from hammer_backendapi.views.utils.pdf_utils import generate_certificate_pdf
+        return generate_certificate_pdf
+    except ImportError as e:
+        raise RuntimeError(f"PDF generation not available: {e}")
 
 
 # ===============================
@@ -53,6 +60,7 @@ def generate_portfolio_certificate(request):
         ]
 
         # 5) Generate and return the PDF
+        generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(TEMPLATE_PATH, 2, fields, "portfolio_certificate.pdf")
 
     except Exception as e:
@@ -89,6 +97,7 @@ def generate_nccer_certificate(request):
             },
         ]
 
+        generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
             TEMPLATE_PATH, 4, fields, "nccer_certificate.pdf"
         )
@@ -127,6 +136,7 @@ def generate_osha_certificate(request):
             },
         ]
 
+        generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
             TEMPLATE_PATH, 5, fields, "osha_certificate.pdf"
         )
@@ -165,6 +175,7 @@ def generate_hammermath_certificate(request):
             },
         ]
 
+        generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
             TEMPLATE_PATH, 6, fields, "hammermath_certificate.pdf"
         )
@@ -202,6 +213,7 @@ def generate_employability_certificate(request):
             },
         ]
 
+        generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
             TEMPLATE_PATH, 7, fields, "employability_certificate.pdf"
         )
@@ -239,6 +251,7 @@ def generate_workforce_certificate(request):
             },
         ]
 
+        generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
             TEMPLATE_PATH, 8, fields, "workforce_certificate.pdf"
         )

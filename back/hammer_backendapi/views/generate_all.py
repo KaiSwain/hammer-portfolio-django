@@ -2,7 +2,16 @@
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from hammer_backendapi.views.utils import generate_master_pdf_pymupdf
+# Remove module-level PDF import to avoid WeasyPrint startup issues
+# from hammer_backendapi.views.utils import generate_master_pdf_pymupdf
+
+def _get_master_pdf_generator():
+    """Lazy import of master PDF generator to avoid WeasyPrint startup issues"""
+    try:
+        from hammer_backendapi.views.utils import generate_master_pdf_pymupdf
+        return generate_master_pdf_pymupdf
+    except ImportError as e:
+        raise RuntimeError(f"PDF generation not available: {e}")
 
 TEMPLATE_PATH = "static/Certificates_Master.pdf"
 
@@ -51,6 +60,7 @@ def generate_all_certificates(request):
     ],
 }
 
+        generate_master_pdf_pymupdf = _get_master_pdf_generator()
         return generate_master_pdf_pymupdf(
             TEMPLATE_PATH,
             page_fields_map,

@@ -1,26 +1,13 @@
 #!/bin/bash
 set -e
 
-echo "Starting complete Django deployment..."
+echo "Starting Django deployment..."
 
-# Install system dependencies for WeasyPrint
-echo "Installing system dependencies..."
-apt-get update || echo "apt-get update failed, continuing..."
-apt-get install -y \
-    libpango-1.0-0 \
-    libharfbuzz0b \
-    libpangoft2-1.0-0 \
-    libfontconfig1 \
-    libcairo2 \
-    libgdk-pixbuf2.0-0 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libgobject-2.0-0 \
-    libcairo-gobject2 \
-    libgio-2.0-0 \
-    || echo "System package installation failed, will continue without WeasyPrint"
+# Skip system packages for now - they need root permissions
+# Focus on getting the app running first
+echo "System dependencies require root - WeasyPrint will be disabled for now"
 
-# Install Python dependencies
+# Install/upgrade Python dependencies
 echo "Installing Python packages..."
 pip install -r requirements.txt
 

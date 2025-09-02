@@ -29,7 +29,7 @@ api_patterns = [
 ]
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),  # Django admin interface
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     

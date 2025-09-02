@@ -26,7 +26,7 @@ fi
 
 # Create superuser for admin access (only if not exists)
 echo "Setting up admin user..."
-python manage.py create_superuser --username=admin --email=admin@hammer.com --password=hammer123 || echo "Admin user setup failed or already exists"
+python manage.py create_superuser --username=admin --email=admin@hammer-portfolio.com || echo "Admin user setup failed or already exists"
 
 # Use PORT environment variable if set, otherwise default to 8000
 PORT=${PORT:-8000}

@@ -15,12 +15,14 @@ export default function Login() {
   const supportDialogRef = useRef();
   const router = useRouter();
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      const response = await fetch(`http://localhost:8000/login`, {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
         body: JSON.stringify({ email, password }),
         headers: {
@@ -48,7 +50,7 @@ export default function Login() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://localhost:8000/api/support/`, {
+      const response = await fetch(`${API_BASE_URL}/api/support/`, {
         method: "POST",
         body: JSON.stringify(supportForm),
         headers: {

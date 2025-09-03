@@ -1,5 +1,7 @@
 // app/services/pdf.js
-const API_URL = "http://localhost:8000";
+import { store } from '../store';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /** Generate selected cert PDFs (unchanged) */
 export async function generateCertificates(student, selectedCerts) {

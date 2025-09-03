@@ -49,6 +49,8 @@ services:
       - path: /health
       - path: /health/
       - path: /media
+      - path: /static
+      - path: /static/
       - path: /test-django
       - path: /test-django/
     

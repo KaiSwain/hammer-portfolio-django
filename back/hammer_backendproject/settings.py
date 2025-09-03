@@ -70,16 +70,27 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS', 
-    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001',
+    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,https://hammermath-app-59ddm.ondigitalocean.app',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
+# Add DigitalOcean origins in production
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS.extend([
+        'https://hammermath-app-59ddm.ondigitalocean.app',
+        'https://*.ondigitalocean.app',
+        'http://*.ondigitalocean.app'
+    ])
+
 CORS_ALLOW_CREDENTIALS = True
+
+# Temporarily allow all origins for debugging - REMOVE IN PRODUCTION
+CORS_ALLOW_ALL_ORIGINS = True
 
 # CSRF trusted origins for production
 CSRF_TRUSTED_ORIGINS_STR = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000,https://*.ondigitalocean.app,https://hammer-portfolio-django-back-xblzb.ondigitalocean.app'
+    default='http://localhost:3000,http://127.0.0.1:3000,https://*.ondigitalocean.app,https://hammer-portfolio-django-back-xblzb.ondigitalocean.app,https://hammermath-app-59ddm.ondigitalocean.app'
 )
 CSRF_TRUSTED_ORIGINS = [s.strip() for s in CSRF_TRUSTED_ORIGINS_STR.split(',')] if CSRF_TRUSTED_ORIGINS_STR else []
 
@@ -91,7 +102,7 @@ if not DEBUG:
     ])
 
 # Additional CORS settings for better compatibility
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development only
+# CORS_ALLOW_ALL_ORIGINS is set above - no need to override here
 
 # CORS headers for API requests
 CORS_ALLOW_HEADERS = [

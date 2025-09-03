@@ -9,21 +9,31 @@ def health_check(request):
     """Health check endpoint for monitoring"""
     
     # Check PDF generation capabilities
-    pdf_status = "available"
+    pdf_status = "unavailable"
+    pdf_error = None
     try:
         from hammer_backendapi.views.utils.pdf_utils import generate_certificate_pdf
         pdf_status = "available"
     except ImportError as e:
-        pdf_status = f"unavailable: {str(e)}"
+        pdf_status = "unavailable"
+        pdf_error = str(e)
+    except Exception as e:
+        pdf_status = "error"
+        pdf_error = str(e)
     
-    return JsonResponse({
+    response_data = {
         "status": "healthy",
         "timestamp": datetime.datetime.now().isoformat(),
         "service": "hammer-portfolio-backend",
         "features": {
             "pdf_generation": pdf_status
         }
-    })
+    }
+    
+    if pdf_error:
+        response_data["features"]["pdf_error"] = pdf_error
+    
+    return JsonResponse(response_data)
 
 @csrf_exempt
 @require_http_methods(["GET"])

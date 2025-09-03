@@ -1,5 +1,5 @@
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hammer-app-hk3st.ondigitalocean.app';
+const API_BASE_URL = 'https://hammer-app-hk3st.ondigitalocean.app';
 
 // Helper function to get token
 const getToken = () => {

@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import include, path
 from django.http import HttpResponse
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework import routers
 from hammer_backendapi.views import login_user, StudentForeignKeyOptionsView
 from hammer_backendapi.views.students import StudentViewSet
@@ -38,7 +40,11 @@ urlpatterns = [
     path('api/', include(api_patterns)),
     path('health/', health_check),  # Root health check for load balancers
     
-    # Temporarily removed root URL to debug routing issue
-    # path('', api_info, name='api_info'),
+    # Root URL - restored after fixing routing issue
+    path('', api_info, name='api_info'),
 ]
+
+# Add static files serving for production
+if not settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

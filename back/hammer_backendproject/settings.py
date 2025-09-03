@@ -84,8 +84,8 @@ if not DEBUG:
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Temporarily allow all origins for debugging - REMOVE IN PRODUCTION
-CORS_ALLOW_ALL_ORIGINS = True
+# Allow all origins temporarily for debugging - TODO: Remove in production
+# CORS_ALLOW_ALL_ORIGINS = True
 
 # CSRF trusted origins for production
 CSRF_TRUSTED_ORIGINS_STR = config(

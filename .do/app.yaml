@@ -17,9 +17,20 @@ services:
     # Install WeasyPrint system dependencies before Python packages
     build_command: |
       apt-get update
-      apt-get install -y libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libfontconfig1 libcairo2 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libgobject-2.0-0 libcairo-gobject2 libgio-2.0-0
+      apt-get install -y \
+        libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
+        libfontconfig1 libcairo2 libgdk-pixbuf2.0-0 \
+        libglib2.0-0 libgtk-3-0 libgobject-2.0-0 \
+        libcairo-gobject2 libgio-2.0-0 \
+        libglib2.0-dev libgobject-2.0-dev \
+        libgirepository1.0-dev \
+        pkg-config \
+        fonts-liberation fonts-dejavu-core \
+        libffi-dev \
+        shared-mime-info
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
+      python manage.py migrate --noinput
     
     run_command: gunicorn hammer_backendproject.wsgi:application --bind 0.0.0.0:8000 --workers 2
     

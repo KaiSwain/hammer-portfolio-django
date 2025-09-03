@@ -1,7 +1,9 @@
 import json
+import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
+logger = logging.getLogger(__name__)
 TEMPLATE_PATH = "static/Certificates_Master.pdf"
 
 def _get_pdf_generator():

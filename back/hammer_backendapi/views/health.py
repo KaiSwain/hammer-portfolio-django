@@ -7,10 +7,22 @@ import datetime
 @require_http_methods(["GET"])
 def health_check(request):
     """Health check endpoint for monitoring"""
+    
+    # Check PDF generation capabilities
+    pdf_status = "available"
+    try:
+        from hammer_backendapi.views.utils.pdf_utils import generate_certificate_pdf
+        pdf_status = "available"
+    except ImportError as e:
+        pdf_status = f"unavailable: {str(e)}"
+    
     return JsonResponse({
         "status": "healthy",
         "timestamp": datetime.datetime.now().isoformat(),
-        "service": "hammer-portfolio-backend"
+        "service": "hammer-portfolio-backend",
+        "features": {
+            "pdf_generation": pdf_status
+        }
     })
 
 @csrf_exempt

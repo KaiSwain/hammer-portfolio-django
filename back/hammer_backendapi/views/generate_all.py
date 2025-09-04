@@ -34,9 +34,9 @@ def generate_all_certificates(request):
         # Build the map of page -> fields (1-based page numbers!)
         page_fields_map = {
     3: [  # Employment Portfolio Overview (was index=2)
-        {"text": disc_text,      "coords": (510, 560), "align": "center", "fontsize": 10, "color": (0,0,0)},
-        {"text": sixteen_text,   "coords": (510, 620), "align": "center", "fontsize": 10, "color": (0,0,0)},
-        {"text": enneagram_text, "coords": (510, 675), "align": "center", "fontsize": 10, "color": (0,0,0)},
+        {"text": disc_text,      "coords": (510, 560), "align": "center", "fontsize": 8, "color": (0,0,0)},
+        {"text": sixteen_text,   "coords": (510, 620), "align": "center", "fontsize": 8, "color": (0,0,0)},
+        {"text": enneagram_text, "coords": (510, 675), "align": "center", "fontsize": 8, "color": (0,0,0)},
     ],
     5: [  # NCCER (was index=4)
         {"text": full_name, "coords": (400, 275), "align": "center", "fontsize": 30, "color": (1,0,0)},

@@ -3,14 +3,9 @@ from io import BytesIO
 from django.http import FileResponse
 from django.conf import settings
 
-# Defensive import for WeasyPrint
-try:
-    from weasyprint import HTML
-    WEASYPRINT_AVAILABLE = True
-except ImportError as e:
-    print(f"[PDF] Warning: WeasyPrint not available: {e}")
-    HTML = None
-    WEASYPRINT_AVAILABLE = False
+# WeasyPrint functionality disabled due to system library conflicts
+WEASYPRINT_AVAILABLE = False
+HTML = None
 
 def generate_certificate_pdf(template_path, page_index, fields, filename="certificate.pdf"):
     """

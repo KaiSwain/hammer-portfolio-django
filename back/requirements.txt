@@ -15,7 +15,7 @@ whitenoise==6.8.2
 # PDF Generation
 pymupdf==1.24.10
 borb==2.1.25
-weasyprint==62.3
+# weasyprint==62.3  # Disabled due to gobject library conflicts on DigitalOcean
 
 # AI Integration
 openai==1.55.0

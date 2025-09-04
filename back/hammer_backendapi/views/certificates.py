@@ -60,9 +60,9 @@ def generate_portfolio_certificate(request):
 
         # 4) Build the fields list for your PDF drawer
         fields = [
-            {"text": disc_text,     "coords": (510, 560), "align": "center", "fontsize": 10, "color": (0, 0, 0)},
-            {"text": sixteen_text,  "coords": (510, 620), "align": "center", "fontsize": 10, "color": (0, 0, 0)},
-            {"text": enneagram_text,"coords": (510, 675), "align": "center", "fontsize": 10, "color": (0, 0, 0)},
+            {"text": disc_text,     "coords": (510, 560), "align": "center", "fontsize": 8, "color": (0, 0, 0)},
+            {"text": sixteen_text,  "coords": (510, 620), "align": "center", "fontsize": 8, "color": (0, 0, 0)},
+            {"text": enneagram_text,"coords": (510, 675), "align": "center", "fontsize": 8, "color": (0, 0, 0)},
         ]
 
         # 5) Generate and return the PDF

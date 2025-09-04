@@ -40,7 +40,7 @@ def generate_certificate_pdf(template_path, page_index, fields, filename="certif
 
     # ✅ Apply text overlays
     for field in fields:
-        text = field.get("text", "")
+        text = field.get("text", "") or ""  # Ensure text is never None
         x, y = field.get("coords", (0, 0))
         fontsize = field.get("fontsize", 14)
         color = field.get("color", (0, 0, 0))  # default black

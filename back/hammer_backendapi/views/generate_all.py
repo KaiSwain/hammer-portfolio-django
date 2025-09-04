@@ -45,7 +45,7 @@ def generate_all_certificates(request):
         {"text": enneagram_text, "coords": (510, 675), "align": "center", "fontsize": 8, "color": (0,0,0)},
     ],
     5: [  # NCCER (was index=4)
-        {"text": full_name, "coords": (385, 275), "align": "center", "fontsize": 30, "color": (1,0,0)},
+        {"text": full_name, "coords": (390, 275), "align": "center", "fontsize": 30, "color": (1,0,0)},
         {"text": end_date,  "coords": (392, 440), "align": "center", "fontsize": 14, "color": (0,0,0)},
     ],
     6: [  # OSHA (was index=5)

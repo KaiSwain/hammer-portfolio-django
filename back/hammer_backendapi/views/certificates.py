@@ -42,9 +42,14 @@ def generate_portfolio_certificate(request):
         sixteen_obj = student.get("sixteen_types_assessment")  # dict or None
         enneagram_obj = student.get("enneagram_result")  # dict or None
 
-        # 3) Safely convert to plain strings
+        # 3) Safely convert to plain strings and clean DISC format
         if isinstance(disc_obj, dict):
-            disc_text = disc_obj.get("type_name") or "N/A"
+            disc_raw = disc_obj.get("type_name") or "N/A"
+            # Remove short code prefix (e.g., "DC - " from "DC - Dominance/Conscientiousness")
+            if " - " in disc_raw and disc_raw != "N/A":
+                disc_text = disc_raw.split(" - ", 1)[1]  # Take everything after " - "
+            else:
+                disc_text = disc_raw
         else:
             disc_text = "N/A"
 

@@ -27,7 +27,13 @@ def generate_all_certificates(request):
         end_date = student.get("end_date") or "N/A"
         osha_date = student.get("osha_completion_date") or "N/A"
 
-        disc_text = (student.get("disc_assessment_type") or {}).get("type_name") or "N/A"
+        # Clean DISC text by removing short code prefix
+        disc_raw = (student.get("disc_assessment_type") or {}).get("type_name") or "N/A"
+        if " - " in disc_raw and disc_raw != "N/A":
+            disc_text = disc_raw.split(" - ", 1)[1]  # Take everything after " - "
+        else:
+            disc_text = disc_raw
+            
         sixteen_text = (student.get("sixteen_types_assessment") or {}).get("type_name") or "N/A"
         enneagram_text = (student.get("enneagram_result") or {}).get("result_name") or "N/A"
 

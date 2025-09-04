@@ -94,7 +94,7 @@ def generate_nccer_certificate(request):
         fields = [
             {
                 "text": full_name,
-                "coords": (370, 275),
+                "coords": (385, 275),
                 "align": "center",
                 "fontsize": 30,
                 "color": (1, 0, 0),

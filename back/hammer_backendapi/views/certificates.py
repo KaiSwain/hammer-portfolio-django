@@ -12,7 +12,11 @@ def _get_pdf_generator():
         from hammer_backendapi.views.utils.pdf_utils import generate_certificate_pdf
         return generate_certificate_pdf
     except ImportError as e:
+        logger.error(f"PDF generation not available: {e}")
         raise RuntimeError(f"PDF generation not available: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error loading PDF generator: {e}")
+        raise RuntimeError(f"PDF generation error: {e}")
 
 
 # ===============================

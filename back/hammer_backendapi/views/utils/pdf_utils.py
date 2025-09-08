@@ -91,7 +91,7 @@ def html_to_pdf_bytes(html: str, base_url: str | None = None) -> bytes:
 def _html_to_pdf_pymupdf(html: str) -> bytes:
     """
     Convert basic HTML to PDF using PyMuPDF.
-    This handles simple HTML structure but not complex CSS styling.
+    This handles simple HTML structure with proper formatting.
     """
     import fitz  # PyMuPDF
     import re
@@ -101,32 +101,79 @@ def _html_to_pdf_pymupdf(html: str) -> bytes:
     doc = fitz.open()
     page = doc.new_page(width=612, height=792)  # US Letter size
     
-    # Basic HTML parsing - extract text content and apply simple formatting
-    # Remove HTML tags and extract content
+    # Parse HTML content with proper formatting
     text_content = _parse_html_content(html)
     
-    # Set up text insertion parameters
-    rect = fitz.Rect(50, 50, 562, 742)  # Margins: 50 points on all sides
+    # Add a title
+    title_rect = fitz.Rect(50, 50, 562, 100)
+    page.insert_textbox(
+        title_rect,
+        "🏗️ PERSONALITY SUMMARY 🏗️",
+        fontsize=16,
+        fontname="helv-bold",
+        color=(0, 0, 0),
+        align=1  # Center align
+    )
     
-    # Insert text with basic formatting
+    # Set up main content area
+    content_rect = fitz.Rect(50, 110, 562, 742)  # Start below title
+    
+    # Insert main content with proper formatting
     try:
         page.insert_textbox(
-            rect,
+            content_rect,
             text_content,
-            fontsize=10,
+            fontsize=11,
             fontname="helv",
             color=(0, 0, 0),
             align=0  # Left align
         )
     except Exception as e:
-        # Fallback to simpler text insertion if textbox fails
-        page.insert_text(
-            (50, 70),
-            text_content,
-            fontsize=10,
-            fontname="helv",
-            color=(0, 0, 0)
-        )
+        # Fallback: split into smaller chunks if content is too long
+        lines = text_content.split('\n')
+        y_pos = 120
+        line_height = 14
+        
+        for line in lines:
+            if y_pos > 730:  # Near bottom of page
+                # Add new page if needed
+                page = doc.new_page(width=612, height=792)
+                y_pos = 50
+            
+            # Check if line is a header (all caps with equals)
+            if line.strip() and '=' in line and line.isupper():
+                # This is a header - make it bold and larger
+                page.insert_text(
+                    (50, y_pos),
+                    line.strip(),
+                    fontsize=12,
+                    fontname="helv-bold",
+                    color=(0, 0, 0)
+                )
+                y_pos += line_height + 5
+            elif line.strip():
+                # Regular content
+                # Check if it's a bullet point
+                if line.strip().startswith('•'):
+                    page.insert_text(
+                        (70, y_pos),  # Indent bullet points
+                        line.strip(),
+                        fontsize=10,
+                        fontname="helv",
+                        color=(0, 0, 0)
+                    )
+                else:
+                    page.insert_text(
+                        (50, y_pos),
+                        line.strip(),
+                        fontsize=10,
+                        fontname="helv",
+                        color=(0, 0, 0)
+                    )
+                y_pos += line_height
+            else:
+                # Empty line - add some space
+                y_pos += line_height / 2
     
     # Convert to bytes
     pdf_bytes = doc.tobytes()
@@ -136,7 +183,7 @@ def _html_to_pdf_pymupdf(html: str) -> bytes:
 
 def _parse_html_content(html: str) -> str:
     """
-    Parse HTML content and extract text with basic formatting.
+    Parse HTML content and extract text with proper sequential formatting.
     """
     import re
     from html import unescape
@@ -144,33 +191,53 @@ def _parse_html_content(html: str) -> str:
     # Remove HTML comments
     html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
     
-    # Extract title/header content
     content_parts = []
     
-    # Process h1, h2, h3 tags
-    h_tags = re.findall(r'<h[1-3][^>]*>(.*?)</h[1-3]>', html, re.DOTALL | re.IGNORECASE)
-    for h_tag in h_tags:
-        clean_header = re.sub(r'<[^>]+>', '', h_tag).strip()
-        if clean_header:
-            content_parts.append(f"\n{clean_header.upper()}\n" + "="*len(clean_header) + "\n")
+    # Parse HTML sequentially to maintain order
+    # Split by major elements and process in order
+    elements = re.split(r'(<h[1-3][^>]*>.*?</h[1-3]>|<p[^>]*>.*?</p>|<ul[^>]*>.*?</ul>)', html, flags=re.DOTALL | re.IGNORECASE)
     
-    # Process p tags
-    p_tags = re.findall(r'<p[^>]*>(.*?)</p>', html, re.DOTALL | re.IGNORECASE)
-    for p_tag in p_tags:
-        clean_p = re.sub(r'<[^>]+>', '', p_tag).strip()
-        if clean_p:
-            content_parts.append(f"{clean_p}\n")
+    for element in elements:
+        element = element.strip()
+        if not element:
+            continue
+            
+        # Process headers
+        h_match = re.match(r'<h[1-3][^>]*>(.*?)</h[1-3]>', element, re.DOTALL | re.IGNORECASE)
+        if h_match:
+            header_text = re.sub(r'<[^>]+>', '', h_match.group(1)).strip()
+            if header_text:
+                content_parts.append(f"\n{header_text.upper()}\n{'='*len(header_text)}\n")
+            continue
+        
+        # Process paragraphs
+        p_match = re.match(r'<p[^>]*>(.*?)</p>', element, re.DOTALL | re.IGNORECASE)
+        if p_match:
+            p_text = re.sub(r'<[^>]+>', '', p_match.group(1)).strip()
+            if p_text:
+                content_parts.append(f"{p_text}\n\n")
+            continue
+        
+        # Process unordered lists
+        ul_match = re.match(r'<ul[^>]*>(.*?)</ul>', element, re.DOTALL | re.IGNORECASE)
+        if ul_match:
+            ul_content = ul_match.group(1)
+            li_items = re.findall(r'<li[^>]*>(.*?)</li>', ul_content, re.DOTALL | re.IGNORECASE)
+            if li_items:
+                for li_content in li_items:
+                    li_text = re.sub(r'<[^>]+>', '', li_content).strip()
+                    if li_text:
+                        content_parts.append(f"• {li_text}\n")
+                content_parts.append("\n")
+            continue
+        
+        # If it's just text content, clean and add it
+        if not re.search(r'<[^>]+>', element):
+            clean_text = unescape(element).strip()
+            if clean_text:
+                content_parts.append(f"{clean_text}\n\n")
     
-    # Process li tags
-    li_tags = re.findall(r'<li[^>]*>(.*?)</li>', html, re.DOTALL | re.IGNORECASE)
-    if li_tags:
-        content_parts.append("\n")
-        for li_tag in li_tags:
-            clean_li = re.sub(r'<[^>]+>', '', li_tag).strip()
-            if clean_li:
-                content_parts.append(f"• {clean_li}\n")
-    
-    # If no structured content found, just clean all HTML
+    # If no structured content found, fall back to simple cleaning
     if not content_parts:
         clean_text = re.sub(r'<[^>]+>', '', html)
         clean_text = unescape(clean_text).strip()
@@ -180,7 +247,7 @@ def _parse_html_content(html: str) -> str:
     result = ''.join(content_parts)
     result = unescape(result)
     
-    # Clean up multiple newlines
-    result = re.sub(r'\n\s*\n\s*\n', '\n\n', result)
+    # Clean up excessive newlines but preserve structure
+    result = re.sub(r'\n\s*\n\s*\n+', '\n\n', result)
     
     return result.strip()

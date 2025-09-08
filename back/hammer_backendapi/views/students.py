@@ -82,15 +82,29 @@ class StudentViewSet(ModelViewSet):
         }
         html = render_to_string("personality_summary.html", context)
 
-        # 3) Return HTML content as JSON (temporary - PDF generation disabled due to library conflicts)
-        return JsonResponse({
-            "success": True,
-            "student_name": student.full_name,
-            "generated_at": timezone.now().strftime("%B %d, %Y"),
-            "summary_html": summary_html,
-            "format": "html",
-            "message": "PDF generation temporarily disabled. Showing HTML content."
-        })
+        # 3) Convert HTML to PDF and return as download
+        try:
+            html_to_pdf = _get_html_to_pdf_converter()
+            pdf_bytes = html_to_pdf(html)
+            
+            # Return as PDF download
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            safe_name = student.full_name.replace(" ", "_").replace("/", "_") or "Student"
+            response["Content-Disposition"] = f'attachment; filename="{safe_name}_personality_summary.pdf"'
+            return response
+            
+        except Exception as pdf_error:
+            print(f"[AI] PDF generation failed: {pdf_error}")
+            # Return HTML content as fallback
+            return JsonResponse({
+                "success": True,
+                "student_name": student.full_name,
+                "generated_at": timezone.now().strftime("%B %d, %Y"),
+                "summary_html": summary_html,
+                "format": "html",
+                "message": f"PDF generation failed: {pdf_error}. Showing HTML content.",
+                "error": str(pdf_error)
+            })
     
 
     

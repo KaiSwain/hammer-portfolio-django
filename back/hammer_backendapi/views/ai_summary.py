@@ -240,6 +240,22 @@ def _create_guaranteed_one_page_content(student_name: str) -> str:
     <p>Provide mentorship opportunities and clear project guidelines for best results. Encourage questions and offer regular feedback to support continued growth and development in both technical skills and professional competencies.</p>
     """
 
+def _create_error_content(error_message: str, student_name: str) -> str:
+    """Create error content for AI summary failures."""
+    return f"""
+    <div style="background-color: #fee; border: 2px solid #f00; padding: 20px; border-radius: 8px; text-align: center;">
+        <h2 style="color: #d00; margin-top: 0;">❌ AI Summary Error</h2>
+        <p style="font-size: 16px; margin: 15px 0;"><strong>Error:</strong> {error_message}</p>
+        <p style="color: #666; font-size: 14px;">
+            Student: {student_name}<br>
+            Please check the OpenAI API configuration or try again later.
+        </p>
+        <p style="color: #888; font-size: 12px; margin-bottom: 0;">
+            If this error persists, contact your administrator.
+        </p>
+    </div>
+    """
+
 def _call_model(payload: Dict[str, Any], model_id: str):
     """
     Call the OpenAI Chat Completions API. Some models (e.g., gpt-5-mini) may reject 'temperature',
@@ -289,6 +305,11 @@ def generate_long_summary_html(student) -> str:
       html = generate_long_summary_html(student)
     Returns a single HTML string (no <html>/<body>) suitable for direct insertion into your template.
     """
+    # Check if OpenAI client is available first
+    if client is None:
+        print("[AI] Error: OpenAI client not initialized - no API key")
+        return _create_error_content("OpenAI API key not configured", student.full_name)
+    
     payload = {"name": student.full_name, "meta": build_meta(student)}
     print("[AI] Model:", MODEL)
     print("[AI] Payload:", payload)
@@ -303,6 +324,9 @@ def generate_long_summary_html(student) -> str:
             return validated_html
     except Exception as e:
         print("[AI] Primary model failed:", e)
+        # Check if it's an API key issue
+        if "authentication" in str(e).lower() or "api_key" in str(e).lower() or "unauthorized" in str(e).lower():
+            return _create_error_content("OpenAI API key authentication failed", student.full_name)
 
     # Try fallback model
     try:
@@ -315,9 +339,12 @@ def generate_long_summary_html(student) -> str:
             return validated_html
     except Exception as e:
         print("[AI] Fallback model also failed:", e)
+        # Check if it's an API key issue
+        if "authentication" in str(e).lower() or "api_key" in str(e).lower() or "unauthorized" in str(e).lower():
+            return _create_error_content("OpenAI API key authentication failed", student.full_name)
 
-    # Final fallback - guaranteed one-page content
-    print("[AI] Using guaranteed one-page fallback content")
-    return _create_guaranteed_one_page_content(student.full_name)
+    # Final fallback - show error instead of generic content
+    print("[AI] All AI models failed - returning error message")
+    return _create_error_content("OpenAI service temporarily unavailable", student.full_name)
 
 

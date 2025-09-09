@@ -30,9 +30,22 @@ try:
     # Create client with minimal configuration to avoid proxy issues
     api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
-        # Use simpler initialization to avoid version compatibility issues
-        client = OpenAI(api_key=api_key)
-        print("[AI] OpenAI client initialized successfully")
+        # Use basic initialization to avoid version compatibility issues
+        try:
+            # Try basic initialization first
+            client = OpenAI(api_key=api_key)
+            print("[AI] OpenAI client initialized successfully")
+        except TypeError as te:
+            # Handle version compatibility issues
+            print(f"[AI] Trying fallback initialization due to: {te}")
+            try:
+                # Try without any extra parameters
+                import openai
+                client = openai.OpenAI(api_key=api_key)
+                print("[AI] OpenAI client initialized with fallback method")
+            except Exception as fallback_e:
+                print(f"[AI] Fallback initialization also failed: {fallback_e}")
+                client = None
     else:
         print("[AI] Warning: OPENAI_API_KEY not found in environment")
         client = None

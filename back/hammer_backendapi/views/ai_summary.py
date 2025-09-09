@@ -41,7 +41,7 @@ except Exception as e:
     # Don't fail the import - just set client to None
     client = None
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # Use gpt-5-mini as preferred model
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Use gpt-4o-mini as default model
 
 # ======== Prompt (Option A: JSON with "html") ========
 INSTR = (
@@ -260,14 +260,10 @@ def _call_model(payload: Dict[str, Any], model_id: str):
     base_args = dict(
         model=model_id,
         messages=messages,
-        max_tokens=3000,  # Use max_tokens instead of max_output_tokens
+        max_completion_tokens=3000,  # Use max_completion_tokens for newer models
     )
 
-    # If the chosen model is known to reject temperature, skip it
-    if model_id in {"gpt-5-mini", "gpt-5-nano"}:
-        return client.chat.completions.create(**base_args)
-
-    # Otherwise, include a light temperature
+    # Always include temperature for standard models
     try:
         return client.chat.completions.create(**base_args, temperature=0.2)
     except Exception as e:
@@ -276,6 +272,15 @@ def _call_model(payload: Dict[str, Any], model_id: str):
         if "Unsupported parameter" in msg and "temperature" in msg:
             print("[AI] Retrying without temperature for model:", model_id)
             return client.chat.completions.create(**base_args)
+        # Auto-retry with max_tokens if max_completion_tokens fails
+        elif "max_completion_tokens" in msg:
+            print("[AI] Retrying with max_tokens instead of max_completion_tokens")
+            fallback_args = dict(
+                model=model_id,
+                messages=messages,
+                max_tokens=3000,
+            )
+            return client.chat.completions.create(**fallback_args, temperature=0.2)
         raise
 
 def generate_long_summary_html(student) -> str:

@@ -110,7 +110,7 @@ def _html_to_pdf_pymupdf(html: str) -> bytes:
         title_rect,
         "🏗️ PERSONALITY SUMMARY 🏗️",
         fontsize=16,
-        fontname="helv-bold",
+        fontname="hebo",  # Use built-in font
         color=(0, 0, 0),
         align=1  # Center align
     )
@@ -124,7 +124,7 @@ def _html_to_pdf_pymupdf(html: str) -> bytes:
             content_rect,
             text_content,
             fontsize=11,
-            fontname="helv",
+            fontname="helv",  # Use built-in helvetica font
             color=(0, 0, 0),
             align=0  # Left align
         )
@@ -147,7 +147,7 @@ def _html_to_pdf_pymupdf(html: str) -> bytes:
                     (50, y_pos),
                     line.strip(),
                     fontsize=12,
-                    fontname="helv-bold",
+                    fontname="hebo",  # Use built-in bold font
                     color=(0, 0, 0)
                 )
                 y_pos += line_height + 5

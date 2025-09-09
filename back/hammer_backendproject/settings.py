@@ -5,10 +5,11 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-# This is crucial for development - it loads .env.development automatically
+# Load environment variables from .env file only in development
+# In production, use actual environment variables from the platform
 env_file = BASE_DIR / '.env.development'
-if env_file.exists():
+if env_file.exists() and os.getenv('DJANGO_DEBUG', 'True').lower() == 'true':
+    # Only load .env file in development mode
     from decouple import Config, RepositoryEnv
     config = Config(RepositoryEnv(env_file))
 

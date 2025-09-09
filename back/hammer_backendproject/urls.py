@@ -10,6 +10,7 @@ from hammer_backendapi.views.students import StudentViewSet
 from hammer_backendapi.views import certificates, generate_all
 from hammer_backendapi.views.health import health_check, api_info
 from hammer_backendapi.views.support import support_request
+from hammer_backendapi.views.ai_diagnostic import ai_diagnostic
 
 def test_view(request):
     return HttpResponse("TEST VIEW WORKING - Django URLs functional with MAIN branch (Sep 2)", content_type="text/plain")
@@ -32,6 +33,7 @@ api_patterns = [
     path("health/", health_check),
     path("info/", api_info),
     path("support/", support_request),
+    path("ai-diagnostic/", ai_diagnostic),
 ]
 
 urlpatterns = [

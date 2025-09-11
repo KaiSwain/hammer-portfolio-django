@@ -10,6 +10,7 @@ from hammer_backendapi.views.students import StudentViewSet
 from hammer_backendapi.views import certificates, generate_all
 from hammer_backendapi.views.health import health_check, api_info
 from hammer_backendapi.views.support import support_request
+from hammer_backendapi.views.network_diagnostic import network_diagnostic_view
 # from hammer_backendapi.views.ai_diagnostic import ai_diagnostic
 
 def test_view(request):
@@ -33,6 +34,7 @@ api_patterns = [
     path("health/", health_check),
     path("info/", api_info),
     path("support/", support_request),
+    path("network-diagnostic/", network_diagnostic_view),
     # path("ai-diagnostic/", ai_diagnostic),
 ]
 

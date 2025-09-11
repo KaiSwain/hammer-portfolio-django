@@ -2,7 +2,7 @@
 FROM python:3.12-slim
 
 # Cache buster - force rebuild
-ENV CACHE_BUST=2025-09-11-v3
+ENV CACHE_BUST=2025-09-11-simple-fix
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1

@@ -27,20 +27,17 @@ print("[AI] ai_summary loaded from:", __file__)
 print("[AI] DEBUG: Code version - FIXED proxies issue v2")
 
 # Initialize OpenAI client safely - Don't fail on import
+client = None
 try:
-    # Simple initialization for Railway environment
     api_key = os.getenv("OPENAI_API_KEY")
-    print(f"[AI] DEBUG: API key found: {bool(api_key)}")
     if api_key:
+        from openai import OpenAI
         client = OpenAI(api_key=api_key)
         print("[AI] OpenAI client initialized successfully")
     else:
         print("[AI] Warning: OPENAI_API_KEY not found in environment")
-        client = None
 except Exception as e:
-    print(f"[AI] Warning: OpenAI client initialization failed: {e}")
-    print(f"[AI] DEBUG: Exception type: {type(e)}")
-    # Don't fail the import - just set client to None
+    print(f"[AI] OpenAI initialization failed: {e}")
     client = None
 
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Use gpt-4o-mini as default model
@@ -419,18 +416,16 @@ def generate_long_summary_html(student) -> str:
     
     print("[AI] === END DIAGNOSTIC ===")
     
-    # Initialize OpenAI client HERE (not at module import time)
+    # Initialize OpenAI client HERE
     openai_client = None
     if api_key:
         try:
-            # Simple initialization - Railway environment is clean
             from openai import OpenAI
             openai_client = OpenAI(api_key=api_key)
-            print("[AI] OpenAI client initialized successfully")
-                    
+            print("[AI] Runtime OpenAI client initialized successfully")
         except Exception as e:
-            print(f"[AI] OpenAI client initialization failed: {e}")
-            return _create_error_content(f"OpenAI client initialization failed: {str(e)}", student.full_name)
+            print(f"[AI] Runtime OpenAI client failed: {e}")
+            return _create_error_content(f"OpenAI failed: {str(e)}", student.full_name)
     
     # Check if OpenAI client is available
     if openai_client is None:

@@ -269,12 +269,12 @@ def _create_error_content(error_message: str, student_name: str) -> str:
     </div>
     """
 
-def _call_model(payload: Dict[str, Any], model_id: str):
+def _call_model(payload: Dict[str, Any], model_id: str, openai_client):
     """
     Call the OpenAI Chat Completions API. Some models (e.g., gpt-5-mini) may reject 'temperature',
     so we conditionally include it and also retry without it on specific errors.
     """
-    if client is None:
+    if openai_client is None:
         raise Exception("OpenAI client is not initialized. Check OPENAI_API_KEY environment variable.")
     
     # Format the input as a system message and user message
@@ -294,13 +294,13 @@ def _call_model(payload: Dict[str, Any], model_id: str):
 
     # Always include temperature for standard models
     try:
-        return client.chat.completions.create(**base_args, temperature=0.2)
+        return openai_client.chat.completions.create(**base_args, temperature=0.2)
     except Exception as e:
         # Auto-retry without temperature if the model complains about it
         msg = str(e)
         if "Unsupported parameter" in msg and "temperature" in msg:
             print("[AI] Retrying without temperature for model:", model_id)
-            return client.chat.completions.create(**base_args)
+            return openai_client.chat.completions.create(**base_args)
         # Auto-retry with max_tokens if max_completion_tokens fails
         elif "max_completion_tokens" in msg:
             print("[AI] Retrying with max_tokens instead of max_completion_tokens")
@@ -309,7 +309,7 @@ def _call_model(payload: Dict[str, Any], model_id: str):
                 messages=messages,
                 max_tokens=3000,
             )
-            return client.chat.completions.create(**fallback_args, temperature=0.2)
+            return openai_client.chat.completions.create(**fallback_args, temperature=0.2)
         raise
 
 def generate_long_summary_html(student) -> str:
@@ -347,8 +347,19 @@ def generate_long_summary_html(student) -> str:
     print(f"[AI] API Key source: {api_key_source}")
     print("[AI] === END DIAGNOSTIC ===")
     
-    # Check if OpenAI client is available first
-    if client is None:
+    # Initialize OpenAI client HERE (not at module import time)
+    openai_client = None
+    if api_key:
+        try:
+            from openai import OpenAI
+            openai_client = OpenAI(api_key=api_key)
+            print("[AI] OpenAI client initialized successfully in function")
+        except Exception as e:
+            print(f"[AI] OpenAI client initialization failed: {e}")
+            return _create_error_content(f"OpenAI client initialization failed: {str(e)}", student.full_name)
+    
+    # Check if OpenAI client is available
+    if openai_client is None:
         error_msg = f"OpenAI client not initialized - API key source: {api_key_source}"
         print(f"[AI] Error: {error_msg}")
         return _create_error_content(error_msg, student.full_name)
@@ -358,7 +369,7 @@ def generate_long_summary_html(student) -> str:
     print("[AI] Payload:", payload)
 
     try:
-        resp = _call_model(payload, MODEL)
+        resp = _call_model(payload, MODEL, openai_client)
         html = _safe_extract_html(resp)
         # If we got a real response (not the fallback), validate and ensure one-page
         if "personality assessment data is being processed" not in html:
@@ -374,7 +385,7 @@ def generate_long_summary_html(student) -> str:
     # Try fallback model
     try:
         print("[AI] Trying fallback model: gpt-4o-mini")
-        resp = _call_model(payload, "gpt-4o-mini")
+        resp = _call_model(payload, "gpt-4o-mini", openai_client)
         html = _safe_extract_html(resp)
         if "personality assessment data is being processed" not in html:
             validated_html = _validate_one_page_content(html, student.full_name)

@@ -163,6 +163,46 @@ def _safe_extract_html(resp) -> str:
     <p>Please contact your administrator if this issue persists.</p>
     """
 
+
+def _safe_extract_html_from_raw(raw_content):
+    """Safely extract HTML content from raw response string."""
+    try:
+        if raw_content and isinstance(raw_content, str):
+            raw = raw_content.strip()
+            print(f"[AI] Raw proxy response: {raw[:500]}...")  # Debug: show first 500 chars
+            
+            # Try to extract JSON even if there's extra text
+            if '{' in raw and '}' in raw:
+                start = raw.find('{')
+                end = raw.rfind('}') + 1
+                json_str = raw[start:end]
+                
+                # Enhanced cleanup for JSON formatting issues
+                import re
+                # Remove control characters that break JSON parsing
+                json_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', json_str)
+                # Fix common JSON issues: unescaped quotes, newlines, etc.
+                json_str = json_str.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+                
+                print(f"[AI] Cleaned JSON from proxy: {json_str[:200]}...")  # Debug
+                
+                data = json.loads(json_str)
+                html = data.get("html")
+                if isinstance(html, str) and html.strip():
+                    print(f"[AI] Successfully extracted HTML from proxy response, length: {len(html)}")
+                    return html
+                    
+            print("[AI] Proxy response missing 'html' key or empty. Raw:", raw[:300])
+            return raw_content.strip()  # Return raw content as fallback
+        return ""
+    except json.JSONDecodeError as e:
+        print(f"[AI] JSON parse error from proxy: {e}")
+        # If JSON parsing fails, return the raw content - it might be direct HTML
+        return raw_content.strip() if raw_content else ""
+    except Exception as e:
+        print(f"[AI] Failed to extract HTML from proxy raw content: {str(e)}")
+        return ""
+
 def _validate_one_page_content(html_content: str, student_name: str) -> str:
     """
     Validate that content will fit on one page and truncate if necessary.
@@ -359,14 +399,34 @@ def generate_long_summary_html(student) -> str:
     
     print(f"[AI] API Key source: {api_key_source}")
     
-    # Quick network test
+    # Quick network test - Test multiple endpoints
     try:
         import requests
-        print("[AI] Testing network connectivity to OpenAI...")
-        response = requests.get("https://api.openai.com/", timeout=5)
-        print(f"[AI] Network test: Status {response.status_code}")
+        print("[AI] Testing network connectivity...")
+        
+        # Test 1: OpenAI API
+        try:
+            response = requests.get("https://api.openai.com/", timeout=5)
+            print(f"[AI] OpenAI API test: ✅ Status {response.status_code}")
+        except Exception as e1:
+            print(f"[AI] OpenAI API test: ❌ {type(e1).__name__}: {str(e1)}")
+        
+        # Test 2: General HTTPS (Google)
+        try:
+            response = requests.get("https://www.google.com/", timeout=5)
+            print(f"[AI] Google test: ✅ Status {response.status_code}")
+        except Exception as e2:
+            print(f"[AI] Google test: ❌ {type(e2).__name__}: {str(e2)}")
+            
+        # Test 3: Another API (GitHub)
+        try:
+            response = requests.get("https://api.github.com/", timeout=5)
+            print(f"[AI] GitHub API test: ✅ Status {response.status_code}")
+        except Exception as e3:
+            print(f"[AI] GitHub API test: ❌ {type(e3).__name__}: {str(e3)}")
+            
     except Exception as net_e:
-        print(f"[AI] Network test FAILED: {type(net_e).__name__}: {str(net_e)}")
+        print(f"[AI] Network test setup FAILED: {type(net_e).__name__}: {str(net_e)}")
     
     print("[AI] === END DIAGNOSTIC ===")
     
@@ -452,8 +512,38 @@ def generate_long_summary_html(student) -> str:
         elif "rate_limit" in str(e).lower() or "quota" in str(e).lower():
             return _create_error_content(f"OpenAI API rate limit exceeded: {str(e)}", student.full_name)
 
-    # Final fallback - show error instead of generic content
-    print("[AI] All AI models failed - returning detailed error message")
-    return _create_error_content(f"OpenAI API calls failed. Check logs for details. Network connectivity may be blocked.", student.full_name)
+    # Try proxy approach as final attempt before giving up
+    try:
+        print("[AI] Trying proxy approach to reach OpenAI...")
+        from .openai_proxy import make_openai_request_via_proxy
+        
+        # Format messages for proxy call
+        system_message = INSTR
+        user_message = json.dumps(payload)
+        messages = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message}
+        ]
+        
+        proxy_response = make_openai_request_via_proxy(api_key, messages, MODEL)
+        
+        # Extract content from proxy response
+        if proxy_response and 'choices' in proxy_response:
+            raw_content = proxy_response['choices'][0]['message']['content']
+            html = _safe_extract_html_from_raw(raw_content)
+            if html and "personality assessment data is being processed" not in html:
+                validated_html = _validate_one_page_content(html, student.full_name)
+                print("[AI] Proxy approach successful!")
+                return validated_html
+                
+    except Exception as proxy_e:
+        print(f"[AI] Proxy approach also failed: {type(proxy_e).__name__}: {str(proxy_e)}")
+
+    # Final fallback - show helpful error message
+    print("[AI] All approaches failed - returning error with solutions")
+    return _create_error_content(
+        "OpenAI API unavailable. Network may be blocked by hosting provider. Solutions: 1) Contact DigitalOcean support to allow api.openai.com, 2) Consider switching to Vercel/Railway/Render hosting.", 
+        student.full_name
+    )
 
 

@@ -322,6 +322,7 @@ def _call_model(payload: Dict[str, Any], model_id: str, openai_client):
                 return openai_client.chat.completions.create(**fallback_args, temperature=0.2)
             else:
                 return openai_client.ChatCompletion.create(**fallback_args, temperature=0.2)
+        print(f"[AI] _call_model failed with error: {type(e).__name__}: {str(e)}")
         raise
 
 def generate_long_summary_html(student) -> str:
@@ -408,6 +409,7 @@ def generate_long_summary_html(student) -> str:
     print("[AI] Payload:", payload)
 
     try:
+        print(f"[AI] Attempting primary model call: {MODEL}")
         resp = _call_model(payload, MODEL, openai_client)
         html = _safe_extract_html(resp)
         # If we got a real response (not the fallback), validate and ensure one-page
@@ -416,10 +418,12 @@ def generate_long_summary_html(student) -> str:
             print("[AI] Content validated for one-page output")
             return validated_html
     except Exception as e:
-        print("[AI] Primary model failed:", e)
+        print(f"[AI] Primary model failed with detailed error: {type(e).__name__}: {str(e)}")
         # Check if it's an API key issue
         if "authentication" in str(e).lower() or "api_key" in str(e).lower() or "unauthorized" in str(e).lower():
-            return _create_error_content("OpenAI API key authentication failed", student.full_name)
+            return _create_error_content(f"OpenAI API key authentication failed: {str(e)}", student.full_name)
+        elif "rate_limit" in str(e).lower() or "quota" in str(e).lower():
+            return _create_error_content(f"OpenAI API rate limit exceeded: {str(e)}", student.full_name)
 
     # Try fallback model
     try:
@@ -431,13 +435,15 @@ def generate_long_summary_html(student) -> str:
             print("[AI] Fallback content validated for one-page output")
             return validated_html
     except Exception as e:
-        print("[AI] Fallback model also failed:", e)
+        print(f"[AI] Fallback model also failed with detailed error: {type(e).__name__}: {str(e)}")
         # Check if it's an API key issue
         if "authentication" in str(e).lower() or "api_key" in str(e).lower() or "unauthorized" in str(e).lower():
-            return _create_error_content("OpenAI API key authentication failed", student.full_name)
+            return _create_error_content(f"OpenAI API key authentication failed: {str(e)}", student.full_name)
+        elif "rate_limit" in str(e).lower() or "quota" in str(e).lower():
+            return _create_error_content(f"OpenAI API rate limit exceeded: {str(e)}", student.full_name)
 
     # Final fallback - show error instead of generic content
-    print("[AI] All AI models failed - returning error message")
-    return _create_error_content("OpenAI service temporarily unavailable", student.full_name)
+    print("[AI] All AI models failed - returning detailed error message")
+    return _create_error_content(f"OpenAI API calls failed - Primary: {MODEL}, Fallback: gpt-4o-mini", student.full_name)
 
 

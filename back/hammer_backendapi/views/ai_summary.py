@@ -24,11 +24,13 @@ from openai import OpenAI
 
 # Prints once at server start so you know this file is being used
 print("[AI] ai_summary loaded from:", __file__)
+print("[AI] DEBUG: Code version - FIXED proxies issue v2")
 
 # Initialize OpenAI client safely - Don't fail on import
 try:
     # Simple initialization for Railway environment
     api_key = os.getenv("OPENAI_API_KEY")
+    print(f"[AI] DEBUG: API key found: {bool(api_key)}")
     if api_key:
         client = OpenAI(api_key=api_key)
         print("[AI] OpenAI client initialized successfully")
@@ -37,6 +39,7 @@ try:
         client = None
 except Exception as e:
     print(f"[AI] Warning: OpenAI client initialization failed: {e}")
+    print(f"[AI] DEBUG: Exception type: {type(e)}")
     # Don't fail the import - just set client to None
     client = None
 

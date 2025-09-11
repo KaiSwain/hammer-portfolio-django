@@ -1,6 +1,9 @@
 # Production Dockerfile for Django Backend
 FROM python:3.12-slim
 
+# Cache buster - force rebuild
+ENV CACHE_BUST=2025-09-11-v3
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

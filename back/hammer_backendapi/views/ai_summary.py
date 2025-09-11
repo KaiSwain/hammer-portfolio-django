@@ -27,25 +27,11 @@ print("[AI] ai_summary loaded from:", __file__)
 
 # Initialize OpenAI client safely - Don't fail on import
 try:
-    # Create client with minimal configuration to avoid proxy issues
+    # Simple initialization for Railway environment
     api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
-        # Use basic initialization to avoid version compatibility issues
-        try:
-            # Try basic initialization first
-            client = OpenAI(api_key=api_key)
-            print("[AI] OpenAI client initialized successfully")
-        except TypeError as te:
-            # Handle version compatibility issues
-            print(f"[AI] Trying fallback initialization due to: {te}")
-            try:
-                # Try without any extra parameters
-                import openai
-                client = openai.OpenAI(api_key=api_key)
-                print("[AI] OpenAI client initialized with fallback method")
-            except Exception as fallback_e:
-                print(f"[AI] Fallback initialization also failed: {fallback_e}")
-                client = None
+        client = OpenAI(api_key=api_key)
+        print("[AI] OpenAI client initialized successfully")
     else:
         print("[AI] Warning: OPENAI_API_KEY not found in environment")
         client = None
@@ -434,35 +420,10 @@ def generate_long_summary_html(student) -> str:
     openai_client = None
     if api_key:
         try:
-            # Try multiple initialization methods for version compatibility
+            # Simple initialization - Railway environment is clean
             from openai import OpenAI
-            
-            # Method 1: Basic initialization (most compatible)
-            try:
-                openai_client = OpenAI(api_key=api_key)
-                print("[AI] OpenAI client initialized with basic method")
-            except TypeError as e:
-                if "'proxies'" in str(e):
-                    # Method 2: Try importing as module and using different approach
-                    print(f"[AI] Basic init failed due to proxies param: {e}")
-                    try:
-                        import openai
-                        openai_client = openai.OpenAI(api_key=api_key)
-                        print("[AI] OpenAI client initialized with module method")
-                    except Exception as e2:
-                        # Method 3: Try setting the API key globally
-                        print(f"[AI] Module init also failed: {e2}")
-                        try:
-                            import openai
-                            openai.api_key = api_key
-                            # For very old versions, create a basic client
-                            openai_client = openai
-                            print("[AI] OpenAI client initialized with legacy method")
-                        except Exception as e3:
-                            print(f"[AI] All initialization methods failed: {e3}")
-                            return _create_error_content(f"OpenAI client initialization failed: All methods tried - {str(e)}, {str(e2)}, {str(e3)}", student.full_name)
-                else:
-                    raise e
+            openai_client = OpenAI(api_key=api_key)
+            print("[AI] OpenAI client initialized successfully")
                     
         except Exception as e:
             print(f"[AI] OpenAI client initialization failed: {e}")

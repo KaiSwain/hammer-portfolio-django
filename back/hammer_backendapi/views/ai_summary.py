@@ -358,6 +358,16 @@ def generate_long_summary_html(student) -> str:
         print(f"[AI] Found API key via settings: {api_key[:8]}...{api_key[-4:] if len(api_key) > 12 else 'SHORT'}")
     
     print(f"[AI] API Key source: {api_key_source}")
+    
+    # Quick network test
+    try:
+        import requests
+        print("[AI] Testing network connectivity to OpenAI...")
+        response = requests.get("https://api.openai.com/", timeout=5)
+        print(f"[AI] Network test: Status {response.status_code}")
+    except Exception as net_e:
+        print(f"[AI] Network test FAILED: {type(net_e).__name__}: {str(net_e)}")
+    
     print("[AI] === END DIAGNOSTIC ===")
     
     # Initialize OpenAI client HERE (not at module import time)
@@ -444,6 +454,6 @@ def generate_long_summary_html(student) -> str:
 
     # Final fallback - show error instead of generic content
     print("[AI] All AI models failed - returning detailed error message")
-    return _create_error_content(f"OpenAI API calls failed - Primary: {MODEL}, Fallback: gpt-4o-mini", student.full_name)
+    return _create_error_content(f"OpenAI API calls failed. Check logs for details. Network connectivity may be blocked.", student.full_name)
 
 

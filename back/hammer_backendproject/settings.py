@@ -7,14 +7,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file only in development
 # In production, use actual environment variables from the platform
-env_file = BASE_DIR / '.env.development'
-if env_file.exists() and os.getenv('DJANGO_DEBUG', 'True').lower() == 'true':
-    # Development mode: load .env file
-    from decouple import Config, RepositoryEnv
-    config = Config(RepositoryEnv(env_file))
-else:
+if os.getenv('DJANGO_DEBUG') == 'False' or not os.path.exists(BASE_DIR / '.env.development'):
     # Production mode: use standard decouple config (reads from environment variables)
     from decouple import config
+    print("[SETTINGS] Using production mode - reading from environment variables")
+else:
+    # Development mode: load .env file  
+    from decouple import Config, RepositoryEnv
+    env_file = BASE_DIR / '.env.development'
+    config = Config(RepositoryEnv(env_file))
+    print("[SETTINGS] Using development mode - reading from .env.development")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb')

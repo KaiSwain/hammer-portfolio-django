@@ -294,13 +294,22 @@ def _call_model(payload: Dict[str, Any], model_id: str, openai_client):
 
     # Always include temperature for standard models
     try:
-        return openai_client.chat.completions.create(**base_args, temperature=0.2)
+        # Handle different client types
+        if hasattr(openai_client, 'chat'):
+            # New client style (OpenAI v1.0+)
+            return openai_client.chat.completions.create(**base_args, temperature=0.2)
+        else:
+            # Legacy client style or module-level client
+            return openai_client.ChatCompletion.create(**base_args, temperature=0.2)
     except Exception as e:
         # Auto-retry without temperature if the model complains about it
         msg = str(e)
         if "Unsupported parameter" in msg and "temperature" in msg:
             print("[AI] Retrying without temperature for model:", model_id)
-            return openai_client.chat.completions.create(**base_args)
+            if hasattr(openai_client, 'chat'):
+                return openai_client.chat.completions.create(**base_args)
+            else:
+                return openai_client.ChatCompletion.create(**base_args)
         # Auto-retry with max_tokens if max_completion_tokens fails
         elif "max_completion_tokens" in msg:
             print("[AI] Retrying with max_tokens instead of max_completion_tokens")
@@ -309,7 +318,10 @@ def _call_model(payload: Dict[str, Any], model_id: str, openai_client):
                 messages=messages,
                 max_tokens=3000,
             )
-            return openai_client.chat.completions.create(**fallback_args, temperature=0.2)
+            if hasattr(openai_client, 'chat'):
+                return openai_client.chat.completions.create(**fallback_args, temperature=0.2)
+            else:
+                return openai_client.ChatCompletion.create(**fallback_args, temperature=0.2)
         raise
 
 def generate_long_summary_html(student) -> str:
@@ -351,9 +363,36 @@ def generate_long_summary_html(student) -> str:
     openai_client = None
     if api_key:
         try:
+            # Try multiple initialization methods for version compatibility
             from openai import OpenAI
-            openai_client = OpenAI(api_key=api_key)
-            print("[AI] OpenAI client initialized successfully in function")
+            
+            # Method 1: Basic initialization (most compatible)
+            try:
+                openai_client = OpenAI(api_key=api_key)
+                print("[AI] OpenAI client initialized with basic method")
+            except TypeError as e:
+                if "'proxies'" in str(e):
+                    # Method 2: Try importing as module and using different approach
+                    print(f"[AI] Basic init failed due to proxies param: {e}")
+                    try:
+                        import openai
+                        openai_client = openai.OpenAI(api_key=api_key)
+                        print("[AI] OpenAI client initialized with module method")
+                    except Exception as e2:
+                        # Method 3: Try setting the API key globally
+                        print(f"[AI] Module init also failed: {e2}")
+                        try:
+                            import openai
+                            openai.api_key = api_key
+                            # For very old versions, create a basic client
+                            openai_client = openai
+                            print("[AI] OpenAI client initialized with legacy method")
+                        except Exception as e3:
+                            print(f"[AI] All initialization methods failed: {e3}")
+                            return _create_error_content(f"OpenAI client initialization failed: All methods tried - {str(e)}, {str(e2)}, {str(e3)}", student.full_name)
+                else:
+                    raise e
+                    
         except Exception as e:
             print(f"[AI] OpenAI client initialization failed: {e}")
             return _create_error_content(f"OpenAI client initialization failed: {str(e)}", student.full_name)

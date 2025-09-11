@@ -318,10 +318,40 @@ def generate_long_summary_html(student) -> str:
       html = generate_long_summary_html(student)
     Returns a single HTML string (no <html>/<body>) suitable for direct insertion into your template.
     """
+    # DIAGNOSTIC: Show exactly what environment variables we can see
+    import os
+    from django.conf import settings
+    
+    print("[AI] === DIAGNOSTIC INFO ===")
+    print(f"[AI] os.getenv('OPENAI_API_KEY'): {'FOUND' if os.getenv('OPENAI_API_KEY') else 'NOT_FOUND'}")
+    print(f"[AI] settings.OPENAI_API_KEY: {'FOUND' if getattr(settings, 'OPENAI_API_KEY', None) else 'NOT_FOUND'}")
+    print(f"[AI] DJANGO_DEBUG: {os.getenv('DJANGO_DEBUG', 'NOT_SET')}")
+    print(f"[AI] settings.DEBUG: {getattr(settings, 'DEBUG', 'NOT_SET')}")
+    
+    # Try to get API key from multiple sources
+    api_key = None
+    api_key_source = "NONE"
+    
+    # Try os.environ first
+    if os.getenv('OPENAI_API_KEY'):
+        api_key = os.getenv('OPENAI_API_KEY')
+        api_key_source = "os.getenv"
+        print(f"[AI] Found API key via os.getenv: {api_key[:8]}...{api_key[-4:] if len(api_key) > 12 else 'SHORT'}")
+    
+    # Try Django settings
+    elif hasattr(settings, 'OPENAI_API_KEY') and settings.OPENAI_API_KEY:
+        api_key = settings.OPENAI_API_KEY
+        api_key_source = "settings"
+        print(f"[AI] Found API key via settings: {api_key[:8]}...{api_key[-4:] if len(api_key) > 12 else 'SHORT'}")
+    
+    print(f"[AI] API Key source: {api_key_source}")
+    print("[AI] === END DIAGNOSTIC ===")
+    
     # Check if OpenAI client is available first
     if client is None:
-        print("[AI] Error: OpenAI client not initialized - no API key")
-        return _create_error_content("OpenAI API key not configured", student.full_name)
+        error_msg = f"OpenAI client not initialized - API key source: {api_key_source}"
+        print(f"[AI] Error: {error_msg}")
+        return _create_error_content(error_msg, student.full_name)
     
     payload = {"name": student.full_name, "meta": build_meta(student)}
     print("[AI] Model:", MODEL)

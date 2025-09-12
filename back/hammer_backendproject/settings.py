@@ -35,12 +35,12 @@ DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
 
 # Production-ready allowed hosts configuration
 # Support both ALLOWED_HOSTS and DJANGO_ALLOWED_HOSTS for flexibility
-ALLOWED_HOSTS_STR = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,*.ondigitalocean.app,hammer-portfolio-django-back-xblzb.ondigitalocean.app'))
+ALLOWED_HOSTS_STR = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,*.railway.app,*.ondigitalocean.app'))
 ALLOWED_HOSTS = [s.strip() for s in ALLOWED_HOSTS_STR.split(',')] if ALLOWED_HOSTS_STR else ['*']
 
-# Add wildcard for DigitalOcean if in production
+# Add wildcard for hosting platforms if in production
 if not DEBUG:
-    ALLOWED_HOSTS.extend(['*.ondigitalocean.app', '*'])
+    ALLOWED_HOSTS.extend(['*.railway.app', '*.ondigitalocean.app', '*'])
 
 
 # Application definition
@@ -96,13 +96,15 @@ CORS_ALLOW_CREDENTIALS = True
 # CSRF trusted origins for production
 CSRF_TRUSTED_ORIGINS_STR = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000,https://*.ondigitalocean.app,https://hammer-portfolio-django-back-xblzb.ondigitalocean.app,https://hammermath-app-59ddm.ondigitalocean.app'
+    default='http://localhost:3000,http://127.0.0.1:3000,https://*.railway.app,https://*.ondigitalocean.app'
 )
 CSRF_TRUSTED_ORIGINS = [s.strip() for s in CSRF_TRUSTED_ORIGINS_STR.split(',')] if CSRF_TRUSTED_ORIGINS_STR else []
 
-# Add DigitalOcean domains if in production
+# Add hosting platform domains if in production
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS.extend([
+        'https://*.railway.app',
+        'http://*.railway.app',
         'https://*.ondigitalocean.app',
         'http://*.ondigitalocean.app'
     ])
@@ -314,6 +316,38 @@ if not DEBUG:
     CSRF_COOKIE_HTTPONLY = True
 
 # Logging Configuration
+import os
+
+# Create logs directory if it doesn't exist and we're not in production cloud environment
+logs_dir = BASE_DIR / 'logs'
+USE_FILE_LOGGING = not config('RAILWAY_ENVIRONMENT', default='') and not config('DO_APP_NAME', default='')
+
+if USE_FILE_LOGGING:
+    logs_dir.mkdir(exist_ok=True)
+
+# Configure handlers based on environment
+handlers_config = {
+    'console': {
+        'level': 'DEBUG' if DEBUG else 'INFO',
+        'class': 'logging.StreamHandler',
+        'formatter': 'simple',
+    },
+}
+
+# Only add file handler if we're not in a cloud environment
+if USE_FILE_LOGGING:
+    handlers_config['file'] = {
+        'level': 'INFO',
+        'class': 'logging.FileHandler',
+        'filename': logs_dir / 'django.log',
+        'formatter': 'verbose',
+    }
+
+# Set up loggers based on available handlers
+logger_handlers = ['console']
+if USE_FILE_LOGGING:
+    logger_handlers.append('file')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -327,31 +361,19 @@ LOGGING = {
             'style': '{',
         },
     },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-    },
+    'handlers': handlers_config,
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': logger_handlers,
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': logger_handlers,
             'level': 'INFO',
             'propagate': False,
         },
         'hammer_backendapi': {
-            'handlers': ['console', 'file'],
+            'handlers': logger_handlers,
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },

@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["python310", "gcc", "pkg-config"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["cd back && python -m pip install -r requirements.txt"]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["cd back && python manage.py collectstatic --noinput"]
+
+[start]
+cmd = "cd back && gunicorn hammer_backendproject.wsgi --bind 0.0.0.0:$PORT"

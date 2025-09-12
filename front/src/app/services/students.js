@@ -1,5 +1,5 @@
 
-const API_BASE_URL = 'https://hammer-app-hk3st.ondigitalocean.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Helper function to get token
 const getToken = () => {

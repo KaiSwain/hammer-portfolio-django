@@ -1,6 +1,6 @@
 // app/services/pdf.js
 
-const API_URL = "https://hammer-app-hk3st.ondigitalocean.app";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /** Generate selected cert PDFs (unchanged) */
 export async function generateCertificates(student, selectedCerts) {

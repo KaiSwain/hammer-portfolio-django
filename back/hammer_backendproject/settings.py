@@ -76,13 +76,16 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS', 
-    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,https://hammermath-app-59ddm.ondigitalocean.app',
+    default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,https://hammermath-app-59ddm.ondigitalocean.app,https://hammer-front-production.up.railway.app',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
-# Add DigitalOcean origins in production
+# Add hosting platform origins in production
 if not DEBUG:
     CORS_ALLOWED_ORIGINS.extend([
+        'https://hammer-front-production.up.railway.app',
+        'https://*.railway.app',
+        'http://*.railway.app',
         'https://hammermath-app-59ddm.ondigitalocean.app',
         'https://*.ondigitalocean.app',
         'http://*.ondigitalocean.app'

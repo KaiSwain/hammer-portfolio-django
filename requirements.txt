@@ -15,10 +15,12 @@ whitenoise==6.8.2
 # PDF Generation
 pymupdf==1.24.10
 borb==2.1.25
+reportlab==4.2.2  # Railway-compatible PDF generation
 # weasyprint==62.3  # Not used for deployment due to dependency issues
 
-# AI Integration
-openai==1.55.0
+# AI Integration - Fixed proxy compatibility issue  
+openai==1.59.6
+httpx==0.27.2
 
 # Development and Testing (optional for production)
 django-debug-toolbar==4.4.6

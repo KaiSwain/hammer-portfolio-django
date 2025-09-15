@@ -15,7 +15,7 @@ export default function Login() {
   const supportDialogRef = useRef();
   const router = useRouter();
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const API_BASE_URL = 'https://hammer-production-173f.up.railway.app';
 
   const handleLogin = async (e) => {
     e.preventDefault();

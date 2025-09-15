@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Production optimizations
+  // Production optimizations - Railway deployment
   output: 'standalone',
   
   // Image optimization

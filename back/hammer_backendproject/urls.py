@@ -10,6 +10,7 @@ from hammer_backendapi.views.students import StudentViewSet
 from hammer_backendapi.views import certificates, generate_all
 from hammer_backendapi.views.health import health_check, api_info
 from hammer_backendapi.views.support import support_request
+from hammer_backendapi.views.ai_summary_fixed import generate_ai_summary, test_ai_connection_api, debug_environment
 # from hammer_backendapi.views.network_diagnostic import network_diagnostic_view
 # from hammer_backendapi.views.ai_diagnostic import ai_diagnostic
 
@@ -30,6 +31,9 @@ api_patterns = [
     path("generate/hammermath/", certificates.generate_hammermath_certificate),
     path("generate/employability/", certificates.generate_employability_certificate),
     path("generate/workforce/", certificates.generate_workforce_certificate),
+    path("ai/summary/", generate_ai_summary),
+    path("ai/test/", test_ai_connection_api),
+    path("ai/debug/", debug_environment),
     path("details/", StudentForeignKeyOptionsView.as_view()),
     path("health/", health_check),
     path("info/", api_info),

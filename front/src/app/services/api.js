@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = 'https://hammer-production-173f.up.railway.app';
 const API_URL = `${API_BASE_URL}/api`;
 
 // Get token from localStorage
@@ -222,6 +222,24 @@ export const apiService = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ student: studentData }),
+    });
+    return response;
+  },
+
+  // AI Summary
+  async generateAiSummary(studentId) {
+    const response = await fetch(`${API_URL}/api/ai/summary/`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ student_id: studentId }),
+    });
+    return response;
+  },
+
+  async testAiConnection() {
+    const response = await fetch(`${API_URL}/ai/test/`, {
+      method: 'GET',
+      headers: getHeaders(),
     });
     return response;
   },

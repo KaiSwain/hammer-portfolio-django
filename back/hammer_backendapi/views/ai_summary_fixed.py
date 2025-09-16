@@ -11,7 +11,7 @@ Django template.
 
 Implementation notes:
 - Clean OpenAI client initialization without proxy issues
-- Uses gpt-4o-mini by default (configurable via OPENAI_MODEL)
+- Uses gpt-5-mini by default (configurable via OPENAI_MODEL)
 - Proper error handling with fallbacks
 - No proxy-related code that causes conflicts
 """
@@ -110,7 +110,7 @@ def get_openai_client():
         traceback.print_exc()
         return None
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # Latest GPT-5 mini model
 
 # Prompt for generating personality summaries
 INSTR = (
@@ -126,6 +126,9 @@ INSTR = (
     "- For any other gender identity: Use they/them pronouns\n"
     "Be consistent with pronoun usage throughout the entire summary.\n"
     
+    "FORMATTING: Use proper spacing - put TWO spaces after each period for better readability.\n"
+    "BULLET POINTS: Each <li> must contain ONE complete sentence that ends with a period.  Do NOT run sentences together in a single bullet point.\n"
+    
     "Style: clear, professional yet engaging, 9th–11th grade; concrete behaviors, not vague traits. Make it interesting!\n\n"
 
     "The \"html\" value must be CLEAN BODY HTML (no <html>, <head>, or <body> tags). Use semantic headings/lists only—no inline CSS.\n\n"
@@ -134,13 +137,13 @@ INSTR = (
     "- Brief <p> intro (1-2 sentences) highlighting their unique personality blend.\n"
     "<h2>Workstyle & Communication</h2>\n"
     "  <p>1-2 sentences about their work approach and communication style.</p>\n"
-    "  <ul><li>3-4 bullets of specific behaviors and strengths.</li></ul>\n"
+    "  <ul><li>First bullet about specific behavior or strength.</li><li>Second bullet about communication style.</li><li>Third bullet about collaboration approach.</li></ul>\n"
     "<h2>Motivators & Learning Style</h2>\n"
     "  <p>1-2 sentences about what energizes them.</p>\n"
-    "  <ul><li>3-4 bullets about feedback preferences and learning approaches.</li></ul>\n"
+    "  <ul><li>First bullet about feedback preferences.</li><li>Second bullet about learning approach.</li><li>Third bullet about motivation drivers.</li></ul>\n"
     "<h2>Best-Fit Environment</h2>\n"
     "  <p>1-2 sentences about their ideal work setting.</p>\n"
-    "  <ul><li>3-4 bullets about tools and support that helps them thrive.</li></ul>\n"
+    "  <ul><li>First bullet about workspace preferences.</li><li>Second bullet about tools and resources needed.</li><li>Third bullet about support systems.</li></ul>\n"
     "<h2>Management Tips</h2>\n"
     "  <p>4-5 specific, actionable employer recommendations in paragraph form.</p>\n\n"
 
@@ -337,8 +340,8 @@ def generate_long_summary_html(student) -> str:
     
     # Try fallback model
     try:
-        print("[AI] Trying fallback model: gpt-4o-mini")
-        response_content = _call_openai_api(payload, "gpt-4o-mini")
+        print("[AI] Trying fallback model: gpt-5-mini")
+        response_content = _call_openai_api(payload, "gpt-5-mini")
         html = _safe_extract_html(response_content)
         
         if "personality assessment data is being processed" not in html:
@@ -490,12 +493,6 @@ def convert_html_to_pdf_reportlab(html_content: str, student_name: str) -> bytes
             paragraph_text = re.sub(r'<[^>]+>', '', line)
             paragraph_text = unescape(paragraph_text)
             if paragraph_text:
-                # Only fix spacing issues, don't mess with regular spaces
-                paragraph_text = re.sub(r'\.([A-Z][a-z])', r'. \1', paragraph_text)  # Fix "word.Another" but not "Jr."
-                paragraph_text = re.sub(r'!([A-Z][a-z])', r'! \1', paragraph_text)  # Fix "great!This" 
-                paragraph_text = re.sub(r'\?([A-Z][a-z])', r'? \1', paragraph_text)  # Fix "why?Because"
-                # Clean up double spaces that might be created
-                paragraph_text = re.sub(r'  +', ' ', paragraph_text)  # Multiple spaces to single space
                 story.append(Paragraph(paragraph_text, body_style))
                 
         elif '<li>' in line:
@@ -503,11 +500,6 @@ def convert_html_to_pdf_reportlab(html_content: str, student_name: str) -> bytes
             item_text = re.sub(r'<[^>]+>', '', line)
             item_text = unescape(item_text)
             if item_text:
-                # Same gentle spacing fixes for list items
-                item_text = re.sub(r'\.([A-Z][a-z])', r'. \1', item_text)
-                item_text = re.sub(r'!([A-Z][a-z])', r'! \1', item_text)
-                item_text = re.sub(r'\?([A-Z][a-z])', r'? \1', item_text)
-                item_text = re.sub(r'  +', ' ', item_text)  # Clean up multiple spaces
                 story.append(Paragraph(f"• {item_text}", bullet_style))
     
     # Build PDF
@@ -527,7 +519,7 @@ def test_openai_connection():
             
         # Simple test call
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=[{"role": "user", "content": "Say 'test successful'"}],
             max_tokens=10
         )

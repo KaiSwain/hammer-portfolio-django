@@ -79,9 +79,13 @@ def get_openai_client():
                 print("[AI] OpenAI import successful")
                 
                 print("[AI] Creating OpenAI client...")
-                # Clean initialization - newer OpenAI version should handle proxies correctly
-                client = OpenAI(api_key=api_key)
-                print("[AI] OpenAI client created successfully")
+                # Ultra-aggressive timeout configuration for production stability
+                client = OpenAI(
+                    api_key=api_key,
+                    timeout=20.0,  # 20 second timeout - very aggressive
+                    max_retries=0  # NO retries to prevent timeout accumulation
+                )
+                print("[AI] OpenAI client created successfully with 20s timeout, NO retries")
                 print(f"[AI] Client type: {type(client)}")
                 
                 # Test if client has required attributes
@@ -110,11 +114,11 @@ def get_openai_client():
         traceback.print_exc()
         return None
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # GPT-5 mini as requested
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Use gpt-4o-mini as default for better reliability
 
-# Prompt for generating personality summaries - REDESIGNED FOR CONSISTENCY
+# Prompt for generating personality summaries - WORKPLACE-FOCUSED FOR STUDENTS
 INSTR = (
-    "You are a professional assessment writer creating one-page personality summaries for construction pre-apprenticeship students.\n\n"
+    "You are a professional assessment writer creating one-page personality summaries to help students understand their workplace strengths and communication style. Focus on traits that make them successful in any professional environment: reliability, communication skills, teamwork, adaptability, and work ethic.\n\n"
     
     "CRITICAL OUTPUT FORMAT: Return ONLY valid JSON: {\"html\": \"your_html_content_here\"}\n\n"
     
@@ -124,41 +128,57 @@ INSTR = (
     "- If gender is null/None/empty or other: Use they/them pronouns consistently\n\n"
     
     "REQUIRED HTML STRUCTURE (use EXACTLY this format):\n"
-    "<p>[Student Name] [brief personality overview - 2 sentences max]</p>\n\n"
+    "<p>[Student Name] demonstrates a [DISC type] communication style, [16 Types personality], and [Enneagram type] motivation pattern, bringing [key workplace strength] to every professional environment through strong commitment to quality, collaboration, and continuous professional development.</p>\n\n"
     
-    "<h2>Workstyle &amp; Communication</h2>\n"
-    "<p>[2 sentences about work approach and communication style]</p>\n"
+    "<h2>Work Style &amp; Communication</h2>\n"
+    "<p>[2 sentences about how they approach work tasks and communicate with colleagues and supervisors]</p>\n"
     "<ul>\n"
-    "<li>[Complete sentence about specific work behavior]</li>\n"
-    "<li>[Complete sentence about communication preference]</li>\n"
-    "<li>[Complete sentence about collaboration style]</li>\n"
+    "<li>[Complete sentence about attention to detail and quality standards]</li>\n"
+    "<li>[Complete sentence about following instructions and asking questions when needed]</li>\n"
+    "<li>[Complete sentence about working effectively with teams and building professional relationships]</li>\n"
     "</ul>\n\n"
     
-    "<h2>Motivators &amp; Learning Style</h2>\n"
-    "<p>[2 sentences about what drives and energizes them]</p>\n"
+    "<h2>Learning Style &amp; Motivation</h2>\n"
+    "<p>[2 sentences about how they learn new skills and what drives them professionally]</p>\n"
     "<ul>\n"
-    "<li>[Complete sentence about feedback preferences]</li>\n"
-    "<li>[Complete sentence about learning approach]</li>\n"
-    "<li>[Complete sentence about motivation factors]</li>\n"
+    "<li>[Complete sentence about preferred learning methods and skill development approach]</li>\n"
+    "<li>[Complete sentence about response to feedback and coaching from supervisors]</li>\n"
+    "<li>[Complete sentence about motivation for building a successful career]</li>\n"
     "</ul>\n\n"
     
-    "<h2>Best-Fit Environment</h2>\n"
-    "<p>[2 sentences about ideal work setting]</p>\n"
+    "<h2>Ideal Work Environment</h2>\n"
+    "<p>[2 sentences about the workplace settings where they thrive best]</p>\n"
     "<ul>\n"
-    "<li>[Complete sentence about workspace preferences]</li>\n"
-    "<li>[Complete sentence about tools/resources needed]</li>\n"
-    "<li>[Complete sentence about support systems]</li>\n"
+    "<li>[Complete sentence about preferred work pace and project types]</li>\n"
+    "<li>[Complete sentence about collaboration preferences and team dynamics]</li>\n"
+    "<li>[Complete sentence about adapting to changing workplace demands]</li>\n"
     "</ul>\n\n"
     
-    "<h2>Management Tips</h2>\n"
-    "<p>[4-5 specific, actionable recommendations for employers in paragraph form with proper spacing between sentences]</p>\n\n"
+    "<h2>Career Development Insights</h2>\n"
+    "<p>[4-5 specific insights about this student's professional strengths and growth potential. Include guidance about work environments where they excel, leadership potential, areas for development, and how they can maximize their career success.]</p>\n\n"
 
+    "WORKPLACE FOCUS:\n"
+    "- Emphasize professional communication, reliability, and work ethic\n"
+    "- Highlight collaboration, problem-solving, and continuous learning\n"
+    "- Focus on adaptability, mentorship readiness, and skill development\n"
+    "- Reference workplace teams, supervisors, projects, and professional growth\n"
+    "- Address work-life balance, professional relationships, and career advancement\n"
+    "- Mention growth from entry-level to experienced professional to leadership roles\n\n"
+    
+    "ASSESSMENT INTEGRATION:\n"
+    "- MUST reference the student's DISC, 16 Types, and Enneagram results in the opening paragraph\n"
+    "- Connect assessment results to specific workplace behaviors and strengths\n"
+    "- Use assessment insights to explain communication style, work preferences, and motivation\n"
+    "- Example: 'D-Dominance' suggests direct communication and results-focused approach\n"
+    "- Example: 'ENTP-The Debater' indicates innovative thinking and collaborative discussion style\n"
+    "- Example: 'Type 6-The Loyalist' shows reliability and team commitment\n\n"
+    
     "STRICT REQUIREMENTS:\n"
     "- 400-450 words total (count carefully)\n"
     "- Use ONLY provided assessment data (DISC, 16 Types, Enneagram)\n"
     "- Each bullet point must be ONE complete sentence\n"
     "- Use proper HTML entities (&amp; for &)\n"
-    "- Professional tone, 9th-11th grade reading level\n"
+    "- Professional but accessible tone for construction industry\n"
     "- NO inline CSS or additional HTML tags\n"
     "- Must fit on one page when printed\n\n"
     
@@ -325,22 +345,46 @@ def _call_openai_api(payload: dict, model_id: str = None) -> str:
         # Prepare API call parameters based on model
         api_params = {
             "model": model_id,
-            "messages": messages,
-            "timeout": 90  # 90 second timeout - allows for slow connections while staying under worker timeout
+            "messages": messages
         }
         
         # Use appropriate token parameter based on model
         if "gpt-5" in model_id.lower():
-            api_params["max_completion_tokens"] = 3000  # GPT-5 uses max_completion_tokens
+            api_params["max_completion_tokens"] = 1500  # Reduced to ensure completion
             # GPT-5 mini only supports default temperature=1
         else:
-            api_params["max_tokens"] = 3000  # GPT-4 uses max_tokens
+            api_params["max_tokens"] = 1500  # Reduced to ensure completion  
             api_params["temperature"] = 0.7  # GPT-4 supports custom temperature
         
         response = client.chat.completions.create(**api_params)
         
-        # Extract content
-        content = response.choices[0].message.content
+        # Extract content with detailed logging and finish_reason check
+        choice = response.choices[0]
+        content = choice.message.content
+        finish_reason = choice.finish_reason
+        
+        print(f"[AI] OpenAI response - content type: {type(content)}")
+        print(f"[AI] OpenAI response - content is None: {content is None}")
+        print(f"[AI] OpenAI response - content length: {len(content) if content else 0}")
+        print(f"[AI] OpenAI response - finish_reason: {finish_reason}")
+        
+        # Check for truncation
+        if finish_reason == "length":
+            print(f"[AI] WARNING: Response was truncated due to token limit!")
+            print(f"[AI] Token usage: {response.usage}")
+            # For truncated responses, we might get incomplete JSON
+            if content and len(content) > 0:
+                print(f"[AI] Trying to use partial content: {content[:200]}...")
+            else:
+                print(f"[AI] Content is empty despite 200 OK - likely truncation issue")
+                return _create_error_content("Response truncated due to token limit. Please try again.", "Student")
+        
+        if content:
+            print(f"[AI] OpenAI response - first 500 chars: {content[:500]}")
+        else:
+            print(f"[AI] OpenAI response - CONTENT IS EMPTY!")
+            return _create_error_content("OpenAI returned empty response", "Student")
+        
         return content
         
     except Exception as e:
@@ -377,7 +421,7 @@ def generate_long_summary_html(student) -> str:
     print(f"[AI] Using model: {MODEL}")
     print(f"[AI] Payload: {payload}")
     
-    # Try primary model
+    # Try primary model with aggressive timeout
     try:
         print(f"[AI] Attempting primary model call: {MODEL}")
         response_content = _call_openai_api(payload, MODEL)
@@ -582,8 +626,7 @@ def test_openai_connection():
         response = client.chat.completions.create(
             model="gpt-5-mini",
             messages=[{"role": "user", "content": "Say 'test successful'"}],
-            max_completion_tokens=10,  # GPT-5 compatible parameter
-            timeout=60  # 60 second timeout for test call
+            max_completion_tokens=10  # GPT-5 compatible parameter
         )
         
         return True, response.choices[0].message.content

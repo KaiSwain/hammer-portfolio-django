@@ -2,6 +2,6 @@ from .auth import login_user
 from .students import StudentViewSet
 from .details import StudentForeignKeyOptionsView
 from .certificates import generate_employability_certificate, generate_hammermath_certificate, generate_nccer_certificate, generate_osha_certificate, generate_portfolio_certificate, generate_workforce_certificate
-from .ai_summary import generate_long_summary_html
+from .ai_summary_fixed import generate_long_summary_html
 from .generate_all import generate_all_certificates
 

@@ -66,7 +66,13 @@ export default function StudentPage() {
       data = data.filter((s) => s.full_name.toLowerCase().includes(search));
     }
     if (sortType === "start_date") {
-      data.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+      // Sort by start date (handle null dates)
+      data.sort((a, b) => {
+        if (!a.start_date && !b.start_date) return 0;
+        if (!a.start_date) return 1;
+        if (!b.start_date) return -1;
+        return a.start_date.localeCompare(b.start_date);
+      });
     } else if (sortType === "recent") {
       data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
@@ -101,13 +107,6 @@ export default function StudentPage() {
             </div>
             <div className="flex space-x-3">
               <button
-                onClick={() => router.push("/students/add")}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center"
-              >
-                <span className="mr-2">➕</span>
-                Add Student
-              </button>
-              <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
               >
@@ -122,7 +121,7 @@ export default function StudentPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filters */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div className="flex-1 max-w-md">
               <label className="block text-sm font-medium text-gray-700 mb-2">Search Students</label>
               <input
@@ -132,6 +131,15 @@ export default function StudentPage() {
                 onChange={handleSearch}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+            <div className="flex items-end justify-center flex-1">
+              <button
+                onClick={() => router.push("/students/add")}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors flex items-center text-lg shadow-md hover:shadow-lg whitespace-nowrap"
+              >
+                <span className="mr-2 text-2xl font-bold">+</span>
+                Add Student
+              </button>
             </div>
             <div className="w-full sm:w-auto">
               <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
@@ -187,7 +195,8 @@ export default function StudentPage() {
                   {filteredStudents.map((student) => (
                     <tr
                       key={student.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      onClick={() => router.push(`/students/${student.id}`)}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center">

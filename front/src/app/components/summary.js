@@ -1,11 +1,10 @@
 "use client";
 
-import React from "react";
-import { useRouter } from "next/navigation";
+import React from 'react';
+import Link from 'next/link';
+import { formatDateString } from '../utils/dateUtils';
 
 export default function StudentSummary({ student }) {
-  const router = useRouter();
-
   // Group fields into logical sections for better organization
   const personalInfo = [
     { label: "Full Name", value: student.full_name, icon: "👤" },
@@ -13,8 +12,8 @@ export default function StudentSummary({ student }) {
     { label: "NCCER Number", value: student.nccer_number || "Not provided", icon: "🆔" },
     { label: "Gender Identity", value: student.gender_identity?.gender ?? "Not specified", icon: "🏷️" },
     { label: "Funding Source", value: student.funding_source?.name ?? "Not specified", icon: "💰" },
-    { label: "Class Start Date", value: student.start_date ? new Date(student.start_date).toLocaleDateString() : "Not set", icon: "📅" },
-    { label: "Class End Date", value: student.end_date ? new Date(student.end_date).toLocaleDateString() : "Not set", icon: "📅" },
+    { label: "Class Start Date", value: student.start_date ? formatDateString(student.start_date) : "Not set", icon: "📅" },
+    { label: "Class End Date", value: student.end_date ? formatDateString(student.end_date) : "Not set", icon: "📅" },
     { label: "Created At", value: new Date(student.created_at).toLocaleDateString(), icon: "📝" },
   ];
 
@@ -29,7 +28,7 @@ export default function StudentSummary({ student }) {
   const oshaInfo = [
     { label: "OSHA 10 Passed", value: student.passed_osha_10_exam, icon: "🦺" },
     { label: "OSHA Type", value: student.osha_type?.name ?? "Not specified", icon: "🏗️" },
-    { label: "OSHA Completion", value: student.osha_completion_date ? new Date(student.osha_completion_date).toLocaleDateString() : "Not completed", icon: "📋" },
+    { label: "OSHA Completion", value: student.osha_completion_date ? formatDateString(student.osha_completion_date) : "Not completed", icon: "📋" },
   ];
 
   const assessmentResults = [
@@ -108,13 +107,13 @@ export default function StudentSummary({ student }) {
               <div className="flex items-center">
                 <span className="text-2xl mr-2">📅</span>
                 <span className="text-sm">
-                  {student.start_date ? `Started ${new Date(student.start_date).toLocaleDateString()}` : 'Start date not set'}
+                  {student.start_date ? `Started ${formatDateString(student.start_date)}` : 'Start date not set'}
                 </span>
               </div>
               {student.end_date && (
                 <div className="flex items-center">
                   <span className="text-2xl mr-2">🎯</span>
-                  <span className="text-sm">Ends {new Date(student.end_date).toLocaleDateString()}</span>
+                  <span className="text-sm">Ends {formatDateString(student.end_date)}</span>
                 </div>
               )}
             </div>

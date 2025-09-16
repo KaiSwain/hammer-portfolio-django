@@ -10,4 +10,4 @@ dependsOn = ["install"]
 cmds = [". /opt/venv/bin/activate && cd back && python manage.py collectstatic --noinput"]
 
 [start]
-cmd = ". /opt/venv/bin/activate && cd back && gunicorn hammer_backendproject.wsgi --bind 0.0.0.0:$PORT --timeout 120"
+cmd = ". /opt/venv/bin/activate && cd back && gunicorn hammer_backendproject.wsgi --bind 0.0.0.0:$PORT --workers 1 --worker-class sync --timeout 45 --keep-alive 2 --max-requests 1000 --max-requests-jitter 100"

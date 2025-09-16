@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 
-from .ai_summary import generate_long_summary_html          # << key import
+from .ai_summary_fixed import generate_long_summary_html          # << key import
 # Remove module-level PDF import to avoid WeasyPrint startup issues
 # from .utils import html_to_pdf_bytes                        # << pdf helper
 

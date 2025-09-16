@@ -52,7 +52,7 @@ export default function CertificateOptions({
         description: "Comprehensive pre-apprenticeship training"
       },
       { 
-        label: "Job Portfolio", 
+        label: "Portfolio Overview 1-Pager", 
         key: "portfolio", 
         icon: "📁", 
         color: "indigo",

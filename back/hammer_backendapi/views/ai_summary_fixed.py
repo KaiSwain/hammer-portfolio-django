@@ -326,7 +326,7 @@ def _call_openai_api(payload: dict, model_id: str = None) -> str:
         api_params = {
             "model": model_id,
             "messages": messages,
-            "timeout": 60  # 60 second timeout to handle slow internet connections
+            "timeout": 90  # 90 second timeout - allows for slow connections while staying under worker timeout
         }
         
         # Use appropriate token parameter based on model
@@ -583,7 +583,7 @@ def test_openai_connection():
             model="gpt-5-mini",
             messages=[{"role": "user", "content": "Say 'test successful'"}],
             max_completion_tokens=10,  # GPT-5 compatible parameter
-            timeout=30  # 30 second timeout for test call to handle slow connections
+            timeout=60  # 60 second timeout for test call
         )
         
         return True, response.choices[0].message.content

@@ -1,1 +1,1 @@
-web: cd back && gunicorn hammer_backendproject.wsgi --bind 0.0.0.0:$PORT
+web: cd back && gunicorn hammer_backendproject.wsgi --bind 0.0.0.0:$PORT --timeout 120

@@ -274,8 +274,7 @@ def _call_openai_api(payload: dict, model_id: str = None) -> str:
         response = client.chat.completions.create(
             model=model_id,
             messages=messages,
-            max_completion_tokens=3000,  # GPT-5 uses max_completion_tokens instead of max_tokens
-            temperature=0.7
+            max_completion_tokens=3000  # GPT-5 uses default temperature=1 only
         )
         
         # Extract content

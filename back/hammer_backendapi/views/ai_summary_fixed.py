@@ -110,47 +110,59 @@ def get_openai_client():
         traceback.print_exc()
         return None
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # Latest GPT-5 mini model
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")  # GPT-5 mini as requested
 
-# Prompt for generating personality summaries
+# Prompt for generating personality summaries - REDESIGNED FOR CONSISTENCY
 INSTR = (
-    "You MUST return ONLY valid JSON with exactly this format: {\"html\": \"your_html_content_here\"}\n\n"
+    "You are a professional assessment writer creating one-page personality summaries for construction pre-apprenticeship students.\n\n"
     
-    "You write engaging, one-page personality summaries for construction pre-apprenticeship students.\n"
-    "Use ONLY the provided assessments (DISC, 16 Types, Enneagram). If any are null/unknown, omit them—do not guess.\n"
+    "CRITICAL OUTPUT FORMAT: Return ONLY valid JSON: {\"html\": \"your_html_content_here\"}\n\n"
     
-    "PRONOUNS & GENDER: Check the 'gender' field in the data:\n"
-    "- If gender is 'Female' or 'Woman': Use she/her pronouns throughout\n"
-    "- If gender is 'Male' or 'Man': Use he/him pronouns throughout\n" 
-    "- If gender is null/None/empty: Use they/them pronouns throughout\n"
-    "- For any other gender identity: Use they/them pronouns\n"
-    "Be consistent with pronoun usage throughout the entire summary.\n"
+    "GENDER HANDLING:\n"
+    "- If gender is 'Female' or 'Woman': Use she/her pronouns consistently\n"
+    "- If gender is 'Male' or 'Man': Use he/him pronouns consistently\n" 
+    "- If gender is null/None/empty or other: Use they/them pronouns consistently\n\n"
     
-    "FORMATTING: Use proper spacing - put TWO spaces after each period for better readability.\n"
-    "BULLET POINTS: Each <li> must contain ONE complete sentence that ends with a period.  Do NOT run sentences together in a single bullet point.\n"
+    "REQUIRED HTML STRUCTURE (use EXACTLY this format):\n"
+    "<p>[Student Name] [brief personality overview - 2 sentences max]</p>\n\n"
     
-    "Style: clear, professional yet engaging, 9th–11th grade; concrete behaviors, not vague traits. Make it interesting!\n\n"
-
-    "The \"html\" value must be CLEAN BODY HTML (no <html>, <head>, or <body> tags). Use semantic headings/lists only—no inline CSS.\n\n"
-
-    "Structure EXACTLY (make each section concise and engaging):\n"
-    "- Brief <p> intro (1-2 sentences) highlighting their unique personality blend.\n"
-    "<h2>Workstyle & Communication</h2>\n"
-    "  <p>1-2 sentences about their work approach and communication style.</p>\n"
-    "  <ul><li>First bullet about specific behavior or strength.</li><li>Second bullet about communication style.</li><li>Third bullet about collaboration approach.</li></ul>\n"
-    "<h2>Motivators & Learning Style</h2>\n"
-    "  <p>1-2 sentences about what energizes them.</p>\n"
-    "  <ul><li>First bullet about feedback preferences.</li><li>Second bullet about learning approach.</li><li>Third bullet about motivation drivers.</li></ul>\n"
+    "<h2>Workstyle &amp; Communication</h2>\n"
+    "<p>[2 sentences about work approach and communication style]</p>\n"
+    "<ul>\n"
+    "<li>[Complete sentence about specific work behavior]</li>\n"
+    "<li>[Complete sentence about communication preference]</li>\n"
+    "<li>[Complete sentence about collaboration style]</li>\n"
+    "</ul>\n\n"
+    
+    "<h2>Motivators &amp; Learning Style</h2>\n"
+    "<p>[2 sentences about what drives and energizes them]</p>\n"
+    "<ul>\n"
+    "<li>[Complete sentence about feedback preferences]</li>\n"
+    "<li>[Complete sentence about learning approach]</li>\n"
+    "<li>[Complete sentence about motivation factors]</li>\n"
+    "</ul>\n\n"
+    
     "<h2>Best-Fit Environment</h2>\n"
-    "  <p>1-2 sentences about their ideal work setting.</p>\n"
-    "  <ul><li>First bullet about workspace preferences.</li><li>Second bullet about tools and resources needed.</li><li>Third bullet about support systems.</li></ul>\n"
-    "<h2>Management Tips</h2>\n"
-    "  <p>4-5 specific, actionable employer recommendations in paragraph form.</p>\n\n"
-
-    "Length: 400-450 words MAX (strictly enforced - count carefully). Use dynamic, positive language while staying professional. "
-    "Be specific to their actual assessment results. MUST fit on one page.\n\n"
+    "<p>[2 sentences about ideal work setting]</p>\n"
+    "<ul>\n"
+    "<li>[Complete sentence about workspace preferences]</li>\n"
+    "<li>[Complete sentence about tools/resources needed]</li>\n"
+    "<li>[Complete sentence about support systems]</li>\n"
+    "</ul>\n\n"
     
-    "CRITICAL: Your response must be ONLY the JSON object, nothing else. No explanations, no markdown, just the JSON."
+    "<h2>Management Tips</h2>\n"
+    "<p>[4-5 specific, actionable recommendations for employers in paragraph form with proper spacing between sentences]</p>\n\n"
+
+    "STRICT REQUIREMENTS:\n"
+    "- 400-450 words total (count carefully)\n"
+    "- Use ONLY provided assessment data (DISC, 16 Types, Enneagram)\n"
+    "- Each bullet point must be ONE complete sentence\n"
+    "- Use proper HTML entities (&amp; for &)\n"
+    "- Professional tone, 9th-11th grade reading level\n"
+    "- NO inline CSS or additional HTML tags\n"
+    "- Must fit on one page when printed\n\n"
+    
+    "Your response must contain ONLY the JSON object with the 'html' key."
 )
 
 def build_meta(student) -> Dict[str, Any]:
@@ -166,6 +178,7 @@ def build_meta(student) -> Dict[str, Any]:
 def _safe_extract_html(response_content: str) -> str:
     """
     Parse the model's JSON response safely and extract HTML content.
+    Also clean and format the HTML for consistency.
     """
     try:
         # Clean the response
@@ -179,6 +192,10 @@ def _safe_extract_html(response_content: str) -> str:
             if isinstance(data, dict) and "html" in data:
                 html_content = data["html"]
                 print(f"[AI] Extracted HTML (first 300 chars): {html_content[:300]}...")
+                
+                # Clean and format the HTML
+                html_content = _clean_html_formatting(html_content)
+                
                 return html_content
             else:
                 print(f"[AI] JSON parsed but no 'html' key found. Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
@@ -192,6 +209,10 @@ def _safe_extract_html(response_content: str) -> str:
             if html_match:
                 html_content = html_match.group(1).replace('\\"', '"').replace('\\n', '\n')
                 print(f"[AI] Extracted HTML via regex (first 300 chars): {html_content[:300]}...")
+                
+                # Clean and format the HTML
+                html_content = _clean_html_formatting(html_content)
+                
                 return html_content
             else:
                 print(f"[AI] Could not extract HTML from malformed JSON")
@@ -199,6 +220,37 @@ def _safe_extract_html(response_content: str) -> str:
     except Exception as e:
         print(f"[AI] Unexpected error in _safe_extract_html: {e}")
         return _create_error_content(f"Unexpected error: {str(e)}", "Student")
+
+def _clean_html_formatting(html_content: str) -> str:
+    """
+    Clean and ensure proper HTML formatting for consistency.
+    """
+    import re
+    
+    # Ensure proper spacing after periods in paragraph text (not in HTML tags)
+    def fix_period_spacing(match):
+        text = match.group(0)
+        # Add proper spacing after periods followed by capital letters
+        text = re.sub(r'\.(?=[A-Z])', '.  ', text)
+        return text
+    
+    # Apply period spacing fix to paragraph content only
+    html_content = re.sub(r'<p>(.*?)</p>', fix_period_spacing, html_content, flags=re.DOTALL)
+    
+    # Ensure proper list formatting - each <li> on its own line
+    html_content = re.sub(r'</li><li>', '</li>\n<li>', html_content)
+    html_content = re.sub(r'<ul><li>', '<ul>\n<li>', html_content)
+    html_content = re.sub(r'</li></ul>', '</li>\n</ul>', html_content)
+    
+    # Ensure proper heading spacing
+    html_content = re.sub(r'</p><h2>', '</p>\n\n<h2>', html_content)
+    html_content = re.sub(r'</h2><p>', '</h2>\n<p>', html_content)
+    html_content = re.sub(r'</ul><h2>', '</ul>\n\n<h2>', html_content)
+    
+    # Remove any double spaces that might have been created
+    html_content = re.sub(r'  +', '  ', html_content)
+    
+    return html_content.strip()
 
 def _create_error_content(error_msg: str, student_name: str) -> str:
     """Create a helpful error message in HTML format."""

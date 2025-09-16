@@ -270,12 +270,22 @@ def _call_openai_api(payload: dict, model_id: str = None) -> str:
     ]
     
     try:
-        # Clean API call with GPT-5 compatible parameters
-        response = client.chat.completions.create(
-            model=model_id,
-            messages=messages,
-            max_completion_tokens=3000  # GPT-5 uses default temperature=1 only
-        )
+        # Prepare API call parameters based on model
+        api_params = {
+            "model": model_id,
+            "messages": messages,
+            "timeout": 60  # 60 second timeout to handle slow internet connections
+        }
+        
+        # Use appropriate token parameter based on model
+        if "gpt-5" in model_id.lower():
+            api_params["max_completion_tokens"] = 3000  # GPT-5 uses max_completion_tokens
+            # GPT-5 mini only supports default temperature=1
+        else:
+            api_params["max_tokens"] = 3000  # GPT-4 uses max_tokens
+            api_params["temperature"] = 0.7  # GPT-4 supports custom temperature
+        
+        response = client.chat.completions.create(**api_params)
         
         # Extract content
         content = response.choices[0].message.content
@@ -337,10 +347,10 @@ def generate_long_summary_html(student) -> str:
         elif "rate_limit" in error_str or "quota" in error_str:
             return _create_error_content(f"OpenAI API rate limit exceeded: {str(e)}", student.full_name)
     
-    # Try fallback model
+    # Try fallback model (gpt-4o-mini if gpt-5-mini failed)
     try:
-        print("[AI] Trying fallback model: gpt-5-mini")
-        response_content = _call_openai_api(payload, "gpt-5-mini")
+        print("[AI] Trying fallback model: gpt-4o-mini")
+        response_content = _call_openai_api(payload, "gpt-4o-mini")
         html = _safe_extract_html(response_content)
         
         if "personality assessment data is being processed" not in html:
@@ -520,7 +530,8 @@ def test_openai_connection():
         response = client.chat.completions.create(
             model="gpt-5-mini",
             messages=[{"role": "user", "content": "Say 'test successful'"}],
-            max_completion_tokens=10  # GPT-5 compatible parameter
+            max_completion_tokens=10,  # GPT-5 compatible parameter
+            timeout=30  # 30 second timeout for test call to handle slow connections
         )
         
         return True, response.choices[0].message.content

@@ -270,11 +270,11 @@ def _call_openai_api(payload: dict, model_id: str = None) -> str:
     ]
     
     try:
-        # Clean API call with minimal parameters
+        # Clean API call with GPT-5 compatible parameters
         response = client.chat.completions.create(
             model=model_id,
             messages=messages,
-            max_tokens=3000,
+            max_completion_tokens=3000,  # GPT-5 uses max_completion_tokens instead of max_tokens
             temperature=0.7
         )
         
@@ -521,7 +521,7 @@ def test_openai_connection():
         response = client.chat.completions.create(
             model="gpt-5-mini",
             messages=[{"role": "user", "content": "Say 'test successful'"}],
-            max_tokens=10
+            max_completion_tokens=10  # GPT-5 compatible parameter
         )
         
         return True, response.choices[0].message.content

@@ -119,26 +119,33 @@ INSTR = (
     "You write engaging, one-page personality summaries for construction pre-apprenticeship students.\n"
     "Use ONLY the provided assessments (DISC, 16 Types, Enneagram). If any are null/unknown, omit them—do not guess.\n"
     
+    "PRONOUNS & GENDER: Check the 'gender' field in the data:\n"
+    "- If gender is 'Female' or 'Woman': Use she/her pronouns throughout\n"
+    "- If gender is 'Male' or 'Man': Use he/him pronouns throughout\n" 
+    "- If gender is null/None/empty: Use they/them pronouns throughout\n"
+    "- For any other gender identity: Use they/them pronouns\n"
+    "Be consistent with pronoun usage throughout the entire summary.\n"
+    
     "Style: clear, professional yet engaging, 9th–11th grade; concrete behaviors, not vague traits. Make it interesting!\n\n"
 
     "The \"html\" value must be CLEAN BODY HTML (no <html>, <head>, or <body> tags). Use semantic headings/lists only—no inline CSS.\n\n"
 
-    "Structure EXACTLY (make each section substantial and engaging):\n"
-    "- Detailed <p> intro (2-3 sentences) highlighting their unique personality blend from assessments present.\n"
+    "Structure EXACTLY (make each section concise and engaging):\n"
+    "- Brief <p> intro (1-2 sentences) highlighting their unique personality blend.\n"
     "<h2>Workstyle & Communication</h2>\n"
-    "  <p>2-3 sentences about their natural work approach and communication style with specific examples.</p>\n"
-    "  <ul><li>4-5 bullets of specific on-site behaviors and strengths with concrete examples.</li></ul>\n"
+    "  <p>1-2 sentences about their work approach and communication style.</p>\n"
+    "  <ul><li>3-4 bullets of specific behaviors and strengths.</li></ul>\n"
     "<h2>Motivators & Learning Style</h2>\n"
-    "  <p>2-3 sentences about what energizes and drives them with specific details.</p>\n"
-    "  <ul><li>4-5 bullets about feedback preferences and learning approaches with examples.</li></ul>\n"
+    "  <p>1-2 sentences about what energizes them.</p>\n"
+    "  <ul><li>3-4 bullets about feedback preferences and learning approaches.</li></ul>\n"
     "<h2>Best-Fit Environment</h2>\n"
-    "  <p>2-3 sentences about their ideal work setting and team dynamics with specifics.</p>\n"
-    "  <ul><li>4-5 bullets about tools, structure, and support that helps them thrive.</li></ul>\n"
+    "  <p>1-2 sentences about their ideal work setting.</p>\n"
+    "  <ul><li>3-4 bullets about tools and support that helps them thrive.</li></ul>\n"
     "<h2>Management Tips</h2>\n"
-    "  <p>5-7 specific, actionable employer recommendations based on their assessment types with concrete examples.</p>\n\n"
+    "  <p>4-5 specific, actionable employer recommendations in paragraph form.</p>\n\n"
 
-    "Length: 500-550 words MAX (strictly enforced). Use dynamic, positive language while staying professional. "
-    "Be specific to their actual assessment results. Make it feel personal and valuable to employers.\n\n"
+    "Length: 400-450 words MAX (strictly enforced - count carefully). Use dynamic, positive language while staying professional. "
+    "Be specific to their actual assessment results. MUST fit on one page.\n\n"
     
     "CRITICAL: Your response must be ONLY the JSON object, nothing else. No explanations, no markdown, just the JSON."
 )
@@ -161,36 +168,34 @@ def _safe_extract_html(response_content: str) -> str:
         # Clean the response
         content = response_content.strip()
         print(f"[AI] Raw response (first 200 chars): {content[:200]}...")
+        print(f"[AI] Raw response (last 200 chars): ...{content[-200:]}")
         
-        # Try to extract JSON
-        if '{' in content and '}' in content:
-            start = content.find('{')
-            end = content.rfind('}') + 1
-            json_str = content[start:end]
-            
-            # Parse JSON
-            data = json.loads(json_str)
-            html = data.get("html")
-            
-            if isinstance(html, str) and html.strip():
-                print(f"[AI] Successfully extracted HTML, length: {len(html)}")
-                return html.strip()
-                
-        print("[AI] JSON missing 'html' key or empty")
-        
-    except json.JSONDecodeError as e:
-        print(f"[AI] JSON parse error: {e}")
+        # Try to parse as JSON
+        try:
+            data = json.loads(content)
+            if isinstance(data, dict) and "html" in data:
+                html_content = data["html"]
+                print(f"[AI] Extracted HTML (first 300 chars): {html_content[:300]}...")
+                return html_content
+            else:
+                print(f"[AI] JSON parsed but no 'html' key found. Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                return _create_error_content("Invalid JSON structure - missing 'html' key", "Student")
+        except json.JSONDecodeError as e:
+            print(f"[AI] JSON decode error: {e}")
+            print(f"[AI] Attempting to extract HTML from malformed response...")
+            # Try to find HTML content even if JSON is malformed
+            import re
+            html_match = re.search(r'"html":\s*"([^"]*(?:\\.[^"]*)*)"', content)
+            if html_match:
+                html_content = html_match.group(1).replace('\\"', '"').replace('\\n', '\n')
+                print(f"[AI] Extracted HTML via regex (first 300 chars): {html_content[:300]}...")
+                return html_content
+            else:
+                print(f"[AI] Could not extract HTML from malformed JSON")
+                return _create_error_content(f"JSON parsing failed: {str(e)}", "Student")
     except Exception as e:
-        print(f"[AI] Unexpected error: {e}")
-        
-    # Fallback content
-    return """
-    <p>This student's personality assessment data is being processed. Please try generating the summary again.</p>
-    <h2>Workstyle & Communication</h2>
-    <p>Individual assessment data will be available upon regeneration.</p>
-    <h2>Management Tips</h2>
-    <p>Please contact your administrator if this issue persists.</p>
-    """
+        print(f"[AI] Unexpected error in _safe_extract_html: {e}")
+        return _create_error_content(f"Unexpected error: {str(e)}", "Student")
 
 def _create_error_content(error_msg: str, student_name: str) -> str:
     """Create a helpful error message in HTML format."""
@@ -206,18 +211,42 @@ def _create_error_content(error_msg: str, student_name: str) -> str:
     """
 
 def _validate_content_length(html: str, student_name: str) -> str:
-    """Ensure the content is appropriate length for one page."""
-    if len(html) > 4000:  # Rough estimate for one page
-        print(f"[AI] Content too long ({len(html)} chars), truncating...")
-        # Find a good place to truncate
-        sentences = html.split('.</p>')
-        truncated = ""
-        for sentence in sentences:
-            if len(truncated + sentence) < 3500:
-                truncated += sentence + '.</p>'
-            else:
-                break
-        return truncated + "\n<p><em>Summary truncated for length.</em></p>"
+    """
+    Ensure content fits on one page - silently trim if needed without showing truncation message.
+    """
+    print(f"[AI] Content length: {len(html)} characters")
+    
+    # If content is too long, silently trim it at natural breaking points
+    if len(html) > 4500:  # Conservative limit for one page
+        print(f"[AI] Content too long ({len(html)} chars), silently trimming...")
+        
+        # Try to find a good natural breaking point (end of a section)
+        sections = html.split('<h2>')
+        if len(sections) > 1:
+            # Keep intro + first 3 sections maximum
+            trimmed = sections[0]  # intro
+            section_count = 0
+            for section in sections[1:]:
+                if section_count < 3 and len(trimmed + '<h2>' + section) < 4200:
+                    trimmed += '<h2>' + section
+                    section_count += 1
+                else:
+                    break
+            
+            print(f"[AI] Trimmed to {len(trimmed)} characters, {section_count + 1} sections")
+            return trimmed
+        else:
+            # If no sections to split, trim at sentence boundaries
+            sentences = html.split('.</p>')
+            trimmed = ""
+            for sentence in sentences:
+                if len(trimmed + sentence + '.</p>') < 4200:
+                    trimmed += sentence + '.</p>'
+                else:
+                    break
+            print(f"[AI] Trimmed to {len(trimmed)} characters at sentence boundary")
+            return trimmed
+    
     return html
 
 def _call_openai_api(payload: dict, model_id: str = None) -> str:
@@ -329,154 +358,121 @@ def generate_long_summary_html(student) -> str:
 
 def convert_html_to_pdf_reportlab(html_content: str, student_name: str) -> bytes:
     """
-    Convert HTML to PDF using ReportLab - Modern, clean, friendly design
-    One-page format with professional styling
+    Convert HTML to PDF using ReportLab - Clean, minimal design matching Cameron Hall PDF
+    Single page format with simple, readable styling
     """
     try:
         from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.colors import HexColor, Color
-        from reportlab.lib.units import inch
-        from reportlab.lib import colors
+        from reportlab.lib.colors import HexColor
     except ImportError as e:
         raise Exception(f"ReportLab not available: {e}")
     
     buffer = BytesIO()
     
-    # Create PDF document with optimized margins
+    # Create PDF document with minimal margins for maximum content space
     doc = SimpleDocTemplate(
         buffer,
         pagesize=letter,
-        rightMargin=45,
-        leftMargin=45,
-        topMargin=35,
-        bottomMargin=35
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=30,
+        bottomMargin=30
     )
     
-    # Modern color palette
-    primary_blue = HexColor('#3B82F6')      # Modern blue
-    secondary_blue = HexColor('#1E40AF')    # Darker blue
-    accent_orange = HexColor('#F59E0B')     # Warm orange
-    text_dark = HexColor('#1F2937')         # Dark gray
-    text_medium = HexColor('#6B7280')       # Medium gray
-    text_light = HexColor('#9CA3AF')        # Light gray
-    success_green = HexColor('#10B981')     # Success green
+    # Simple, clean colors - minimal palette
+    dark_text = HexColor('#1a202c')      # Rich dark gray
+    medium_text = HexColor('#2d3748')    # Medium gray  
+    light_text = HexColor('#718096')     # Light gray for dates
+    section_text = HexColor('#2c5282')   # Subtle blue for headings
     
     # Get base styles
     styles = getSampleStyleSheet()
     
-    # Custom modern styles
-    header_style = ParagraphStyle(
-        'ModernHeader',
+    # Clean, elegant styles matching Cameron Hall PDF
+    title_style = ParagraphStyle(
+        'CleanTitle',
         parent=styles['Heading1'],
-        fontSize=20,
-        spaceAfter=8,
+        fontSize=18,
+        spaceAfter=6,
+        spaceBefore=0,
         alignment=1,  # Center
-        textColor=primary_blue,
+        textColor=dark_text,
         fontName='Helvetica-Bold'
     )
     
     name_style = ParagraphStyle(
-        'ModernName',
+        'CleanName',
         parent=styles['Heading2'],
-        fontSize=16,
-        spaceAfter=5,
+        fontSize=15,
+        spaceAfter=4,
         spaceBefore=2,
         alignment=1,  # Center
-        textColor=text_dark,
+        textColor=section_text,
         fontName='Helvetica-Bold'
     )
     
-    subtitle_style = ParagraphStyle(
-        'ModernSubtitle',
+    date_style = ParagraphStyle(
+        'CleanDate',
         parent=styles['Normal'],
         fontSize=10,
-        spaceAfter=20,
+        spaceAfter=18,
         alignment=1,  # Center
-        textColor=text_medium,
+        textColor=light_text,
         fontName='Helvetica-Oblique'
     )
     
-    section_header_style = ParagraphStyle(
-        'ModernSectionHeader',
-        parent=styles['Heading2'],
-        fontSize=13,
-        spaceAfter=8,
-        spaceBefore=15,
-        textColor=secondary_blue,
+    section_style = ParagraphStyle(
+        'CleanSection',
+        parent=styles['Heading3'],
+        fontSize=12,
+        spaceAfter=5,
+        spaceBefore=12,
+        textColor=section_text,
         fontName='Helvetica-Bold',
-        borderWidth=0,
-        borderColor=primary_blue,
-        borderPadding=0,
         leftIndent=0
     )
     
     body_style = ParagraphStyle(
-        'ModernBody',
+        'CleanBody',
         parent=styles['Normal'],
         fontSize=10,
-        spaceAfter=6,
+        spaceAfter=4,
+        spaceBefore=1,
         alignment=0,  # Left
-        textColor=text_dark,
+        textColor=dark_text,
         fontName='Helvetica',
-        leftIndent=10,
-        rightIndent=10,
+        leftIndent=0,
+        rightIndent=0,
         leading=12
     )
     
     bullet_style = ParagraphStyle(
-        'ModernBullet',
+        'CleanBullet',
         parent=styles['Normal'],
         fontSize=10,
-        spaceAfter=4,
-        alignment=0,  # Left
-        textColor=text_dark,
+        spaceAfter=3,
+        alignment=0,
+        textColor=dark_text,
         fontName='Helvetica',
-        leftIndent=20,
-        bulletIndent=10,
+        leftIndent=15,
         leading=12
     )
     
     # Create story (content)
     story = []
     
-    # Modern header with emoji and styling
-    story.append(Paragraph("✨ PERSONALITY INSIGHTS ✨", header_style))
-    story.append(Paragraph(f"{student_name}", name_style))
+    # Simple, clean header
+    story.append(Paragraph("Personality Summary", title_style))
+    story.append(Paragraph(student_name, name_style))
     
-    # Add generation date with modern styling
+    # Add generation date
     from datetime import datetime
-    story.append(Paragraph(f"Generated {datetime.now().strftime('%B %d, %Y')}", subtitle_style))
+    story.append(Paragraph(datetime.now().strftime('%B %d, %Y'), date_style))
     
-    # Add a subtle separator line using a table
-    separator_data = [['', '', '']]
-    separator_table = Table(separator_data, colWidths=[2*inch, 1*inch, 2*inch])
-    separator_table.setStyle(TableStyle([
-        ('LINEBELOW', (1, 0), (1, 0), 2, primary_blue),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-    ]))
-    story.append(separator_table)
-    story.append(Spacer(1, 10))
-    
-    # Parse and add content with modern styling
+    # Parse and add content with minimal styling
     lines = html_content.split('\n')
-    section_icons = {
-        'personality': '🎯',
-        'strengths': '💪',
-        'communication': '💬',
-        'leadership': '👑',
-        'teamwork': '🤝',
-        'work': '⚡',
-        'career': '🚀',
-        'development': '📈',
-        'growth': '🌱',
-        'skills': '🔧',
-        'traits': '✨',
-        'summary': '📋',
-        'overview': '🔍',
-        'profile': '👤'
-    }
     
     for line in lines:
         line = line.strip()
@@ -487,47 +483,32 @@ def convert_html_to_pdf_reportlab(html_content: str, student_name: str) -> bytes
         if '<h2>' in line and '</h2>' in line:
             section_title = re.sub(r'<[^>]+>', '', line)
             section_title = unescape(section_title)
-            
-            # Add appropriate icon based on section content
-            icon = '🔸'  # Default icon
-            section_lower = section_title.lower()
-            for keyword, emoji in section_icons.items():
-                if keyword in section_lower:
-                    icon = emoji
-                    break
-            
-            formatted_title = f"{icon} {section_title}"
-            story.append(Paragraph(formatted_title, section_header_style))
+            story.append(Paragraph(section_title, section_style))
             
         elif '<p>' in line:
             # This is a paragraph
             paragraph_text = re.sub(r'<[^>]+>', '', line)
             paragraph_text = unescape(paragraph_text)
             if paragraph_text:
+                # Only fix spacing issues, don't mess with regular spaces
+                paragraph_text = re.sub(r'\.([A-Z][a-z])', r'. \1', paragraph_text)  # Fix "word.Another" but not "Jr."
+                paragraph_text = re.sub(r'!([A-Z][a-z])', r'! \1', paragraph_text)  # Fix "great!This" 
+                paragraph_text = re.sub(r'\?([A-Z][a-z])', r'? \1', paragraph_text)  # Fix "why?Because"
+                # Clean up double spaces that might be created
+                paragraph_text = re.sub(r'  +', ' ', paragraph_text)  # Multiple spaces to single space
                 story.append(Paragraph(paragraph_text, body_style))
                 
         elif '<li>' in line:
-            # This is a list item with modern bullet styling
+            # This is a list item - simple bullet
             item_text = re.sub(r'<[^>]+>', '', line)
             item_text = unescape(item_text)
             if item_text:
-                # Use modern bullet point
-                story.append(Paragraph(f"▸ {item_text}", bullet_style))
-    
-    # Add a footer with a motivational note
-    story.append(Spacer(1, 15))
-    
-    footer_table = Table([['', '🌟 Embrace your unique strengths and continue growing! 🌟', '']], 
-                        colWidths=[1*inch, 4*inch, 1*inch])
-    footer_table.setStyle(TableStyle([
-        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
-        ('FONTNAME', (1, 0), (1, 0), 'Helvetica-Oblique'),
-        ('FONTSIZE', (1, 0), (1, 0), 9),
-        ('TEXTCOLOR', (1, 0), (1, 0), accent_orange),
-        ('LINEABOVE', (1, 0), (1, 0), 1, text_light),
-        ('TOPPADDING', (1, 0), (1, 0), 8),
-    ]))
-    story.append(footer_table)
+                # Same gentle spacing fixes for list items
+                item_text = re.sub(r'\.([A-Z][a-z])', r'. \1', item_text)
+                item_text = re.sub(r'!([A-Z][a-z])', r'! \1', item_text)
+                item_text = re.sub(r'\?([A-Z][a-z])', r'? \1', item_text)
+                item_text = re.sub(r'  +', ' ', item_text)  # Clean up multiple spaces
+                story.append(Paragraph(f"• {item_text}", bullet_style))
     
     # Build PDF
     doc.build(story)

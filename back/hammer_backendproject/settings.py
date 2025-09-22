@@ -1,46 +1,41 @@
-from decouple import config
-from pathlib import Path
+"""
+LEGACY SETTINGS FILE - DEPRECATED
+
+This file is maintained for backward compatibility only.
+The new settings structure is in the settings/ directory:
+
+- settings/base.py: Common settings for all environments
+- settings/development.py: Development environment settings
+- settings/production.py: Production environment settings  
+- settings/testing.py: Test environment settings
+
+To use the new settings structure, set DJANGO_SETTINGS_MODULE to:
+- hammer_backendproject.settings.development (for dev)
+- hammer_backendproject.settings.production (for prod)
+- hammer_backendproject.settings.testing (for tests)
+
+Or use the DJANGO_ENVIRONMENT variable to auto-detect:
+- DJANGO_ENVIRONMENT=development
+- DJANGO_ENVIRONMENT=production
+- DJANGO_ENVIRONMENT=testing
+"""
+
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Environment detection for backward compatibility
+environment = os.getenv('DJANGO_ENVIRONMENT', 'production')
 
-# Load environment variables from .env file only in development
-# In production, use actual environment variables from the platform
-if os.getenv('DJANGO_DEBUG') == 'False' or not os.path.exists(BASE_DIR / '.env.development'):
-    # Production mode: use standard decouple config (reads from environment variables)
-    from decouple import config
-    print("[SETTINGS] Using production mode - reading from environment variables")
+if environment == 'development':
+    from .settings.development import *
+elif environment == 'testing':
+    from .settings.testing import *
 else:
-    # Development mode: load .env file  
-    from decouple import Config, RepositoryEnv
-    env_file = BASE_DIR / '.env.development'
-    config = Config(RepositoryEnv(env_file))
-    print("[SETTINGS] Using development mode - reading from .env.development")
+    from .settings.production import *
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb')
-
-# OpenAI Configuration
-OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
-OPENAI_MODEL = config("OPENAI_MODEL", default="gpt-4o-mini")
-
-# Set OpenAI API key in environment for the openai library
-# This is important because the OpenAI client reads from os.environ
-if OPENAI_API_KEY:
-    os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
-
-# Production-ready allowed hosts configuration
-# Support both ALLOWED_HOSTS and DJANGO_ALLOWED_HOSTS for flexibility
-ALLOWED_HOSTS_STR = config('ALLOWED_HOSTS', default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,*.railway.app,*.ondigitalocean.app'))
-ALLOWED_HOSTS = [s.strip() for s in ALLOWED_HOSTS_STR.split(',')] if ALLOWED_HOSTS_STR else ['*']
-
-# Add wildcard for hosting platforms if in production
-if not DEBUG:
-    ALLOWED_HOSTS.extend(['*.railway.app', '*.ondigitalocean.app', '*'])
+# Import the new settings for backward compatibility
+# This will auto-detect the environment and load appropriate settings
+from .settings.base import *
+from .settings.development import *  # This will be overridden by environment detection
 
 
 # Application definition

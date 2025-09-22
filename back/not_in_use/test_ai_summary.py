@@ -11,14 +11,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings'
 django.setup()
 
 from hammer_backendapi.models import Student
-from hammer_backendapi.views.ai_summary import generate_long_summary_html
+from back.not_in_use.ai_summary import generate_long_summary_html
 
 print("Testing AI Summary functionality...")
 print("=" * 50)
 
 # Test OpenAI client initialization
 try:
-    from hammer_backendapi.views.ai_summary import client, MODEL
+    from back.not_in_use.ai_summary import client, MODEL
     print(f"OpenAI Client: {'✅ Initialized' if client else '❌ Not initialized'}")
     print(f"Model: {MODEL}")
     

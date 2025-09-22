@@ -11,7 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hammer_backendproject.settings'
 django.setup()
 
 from hammer_backendapi.models import Student
-from hammer_backendapi.views.ai_summary import generate_long_summary_html
+from back.not_in_use.ai_summary import generate_long_summary_html
 from hammer_backendapi.views.utils.pdf_utils import html_to_pdf_bytes
 from django.template.loader import render_to_string
 from django.utils import timezone

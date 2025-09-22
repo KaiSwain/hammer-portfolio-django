@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hammer_dev_db
+    environment:
+      POSTGRES_DB: hammer_dev
+      POSTGRES_USER: hammer_dev_user
+      POSTGRES_PASSWORD: hammer_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"  # Use 5433 to avoid conflicts with system PostgreSQL
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./back/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    networks:
+      - hammer_dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hammer_dev_user -d hammer_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_dev_data:
+    driver: local
+
+networks:
+  hammer_dev:
+    driver: bridge

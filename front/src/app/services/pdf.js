@@ -1,6 +1,6 @@
 // app/services/pdf.js
 
-const API_URL = "https://hammer-production-173f.up.railway.app";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://hammer-production-173f.up.railway.app";
 
 /** Generate selected cert PDFs (unchanged) */
 export async function generateCertificates(student, selectedCerts) {

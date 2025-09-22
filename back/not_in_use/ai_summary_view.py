@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from hammer_backendapi.models import Student
-from .ai_summary_fixed import generate_long_summary_html
+from ..hammer_backendapi.views.ai_summary_fixed import generate_long_summary_html
 from io import BytesIO
 import re
 from html import unescape
@@ -217,7 +217,7 @@ def test_ai_connection(request):
     Test endpoint to verify OpenAI connection works.
     """
     try:
-        from .ai_summary_fixed import test_openai_connection
+        from ..hammer_backendapi.views.ai_summary_fixed import test_openai_connection
         
         success, message = test_openai_connection()
         

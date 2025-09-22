@@ -1,6 +1,8 @@
-// API Configuration
-const API_BASE_URL = 'https://hammer-production-173f.up.railway.app';
+// API Configuration - Uses environment variables for different environments
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hammer-production-173f.up.railway.app';
 const API_URL = `${API_BASE_URL}/api`;
+
+console.log('🔧 API Configuration:', { API_BASE_URL, NODE_ENV: process.env.NODE_ENV });
 
 // Get token from localStorage
 const getToken = () => {

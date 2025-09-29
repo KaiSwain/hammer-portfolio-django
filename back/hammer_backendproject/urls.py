@@ -11,6 +11,7 @@ from hammer_backendapi.views import certificates, generate_all
 from hammer_backendapi.views.health import health_check, api_info
 from hammer_backendapi.views.support import support_request
 from hammer_backendapi.views.ai_summary_fixed import generate_ai_summary, test_ai_connection_api, debug_environment
+from hammer_backendapi.views import student_files
 # from hammer_backendapi.views.network_diagnostic import network_diagnostic_view
 # from hammer_backendapi.views.ai_diagnostic import ai_diagnostic
 
@@ -38,6 +39,11 @@ api_patterns = [
     path("health/", health_check),
     path("info/", api_info),
     path("support/", support_request),
+    # Student Files API
+    path("students/<int:student_id>/files/", student_files.list_student_files, name='list-student-files'),
+    path("students/<int:student_id>/files/upload/", student_files.upload_student_file, name='upload-student-file'),
+    path("student-files/<int:file_id>/", student_files.delete_student_file, name='delete-student-file'),
+    path("student-files/<int:file_id>/download/", student_files.download_student_file, name='download-student-file'),
     # path("network-diagnostic/", network_diagnostic_view),
     # path("ai-diagnostic/", ai_diagnostic),
 ]
@@ -52,7 +58,12 @@ urlpatterns = [
     path('', api_info, name='api_info'),
 ]
 
-# Add static files serving for production
-if not settings.DEBUG:
+# Add static and media files serving
+if settings.DEBUG:
+    # Development: serve media files
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # Production: serve static files (media handled by S3)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

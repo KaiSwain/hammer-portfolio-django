@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from hammer_backendapi.models import (
     Student,
+    StudentFile,
     GenderIdentity,
     DiscAssessment,
     SixteenTypeAssessment,
@@ -46,6 +47,37 @@ class FundingSourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = FundingSource
         fields = ("id", "name", "description")
+
+
+class StudentFileSerializer(serializers.ModelSerializer):
+    """Serializer for student file uploads"""
+    student_name = serializers.CharField(source='student.first_name', read_only=True)
+    uploaded_by_name = serializers.CharField(source='uploaded_by.username', read_only=True)
+    file_url = serializers.SerializerMethodField()
+    file_size_mb = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = StudentFile
+        fields = [
+            'id', 'student', 'student_name', 'file', 'file_url', 
+            'original_filename', 'file_size', 'file_size_mb', 
+            'uploaded_at', 'uploaded_by', 'uploaded_by_name'
+        ]
+        read_only_fields = ['id', 'uploaded_at', 'uploaded_by', 'file_size']
+    
+    def get_file_url(self, obj):
+        """Get the file URL for download"""
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+        return None
+    
+    def get_file_size_mb(self, obj):
+        """Get file size in MB with 2 decimal places"""
+        if obj.file_size:
+            return round(obj.file_size / (1024 * 1024), 2)
+        return 0
 
 
 # ---- Main serializer ----

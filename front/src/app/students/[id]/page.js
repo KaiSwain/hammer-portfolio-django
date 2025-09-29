@@ -12,6 +12,7 @@ import { generateCertificates } from "@/app/services/pdf"; // Service to handle 
 import StudentSummary from "@/app/components/summary"; // Component for displaying student details
 import { generateAiSummary } from "@/app/services/pdf";
 import { generateMasterPortfolio } from "@/app/services/pdf";
+import StudentFiles from "@/app/components/StudentFiles"; // Student file management component
 
 /**
  * StudentDetails Page
@@ -153,6 +154,14 @@ export default function StudentDetails() {
               generateMasterPortfolio={generateMasterPortfolio}
             />
           </div>
+        </div>
+
+        {/* Student Files Section - Full Width */}
+        <div className="mt-8">
+          <StudentFiles 
+            studentId={id} 
+            studentName={student?.first_name || 'Student'} 
+          />
         </div>
       </div>
 

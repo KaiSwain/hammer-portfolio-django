@@ -128,4 +128,39 @@ class Student(models.Model):
 
     def __str__(self):
         return self.full_name
+
+
+import os
+import uuid
+
+def student_file_path(instance, filename):
+    """Generate file path: students/{student_id}/{uuid}.{ext}"""
+    base, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    safe_filename = f"{uuid.uuid4().hex}{ext}"
     
+    # Create path for student files
+    path = f"students/{instance.student.id}/{safe_filename}"
+    return path
+
+class StudentFile(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='files')
+    file = models.FileField(upload_to=student_file_path)
+    original_name = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100, default='application/octet-stream')
+    size_bytes = models.PositiveIntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Student File'
+        verbose_name_plural = 'Student Files'
+    
+    def __str__(self):
+        return f"{self.student.full_name} - {self.original_name}"
+    
+    @property
+    def file_size_mb(self):
+        return round(self.size_bytes / (1024 * 1024), 2)
+

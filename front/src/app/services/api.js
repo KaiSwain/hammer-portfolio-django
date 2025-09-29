@@ -238,6 +238,131 @@ export const apiService = {
     return response;
   },
 
+  // Student Files API
+  async getStudentFiles(studentId) {
+    try {
+      const response = await fetch(`${API_URL}/students/${studentId}/files/`, {
+        method: 'GET',
+        headers: getHeaders(),
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Student files API response:', data);
+      
+      // The API now returns an array directly
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data && Array.isArray(data.files)) {
+        // Handle old format if still returned
+        return data.files;
+      } else if (data && Array.isArray(data.results)) {
+        // Handle paginated response
+        return data.results;
+      } else {
+        console.warn('API returned unexpected data structure:', data);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching student files:', error);
+      throw error;
+    }
+  },
+
+  async uploadStudentFile(studentId, file, originalFilename) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('original_filename', originalFilename);
+      
+      const token = getToken();
+      const headers = {};
+      if (token) {
+        headers.Authorization = `Token ${token}`;
+      }
+      
+      const response = await fetch(`${API_URL}/students/${studentId}/files/upload/`, {
+        method: 'POST',
+        headers: headers, // Don't set Content-Type for FormData
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Error uploading student file:', error);
+      throw error;
+    }
+  },
+
+  async deleteStudentFile(fileId) {
+    try {
+      const response = await fetch(`${API_URL}/student-files/${fileId}/`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting student file:', error);
+      throw error;
+    }
+  },
+
+  async downloadStudentFile(fileId) {
+    try {
+      const token = getToken();
+      const headers = {};
+      if (token) {
+        headers.Authorization = `Token ${token}`;
+      }
+      
+      // First, get the download information
+      const response = await fetch(`${API_URL}/student-files/${fileId}/download/`, {
+        method: 'GET',
+        headers: headers,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const downloadInfo = await response.json();
+      console.log('Download info:', downloadInfo);
+      
+      // Now fetch the actual file using the download_url
+      const fileUrl = `${API_BASE_URL}${downloadInfo.download_url}`;
+      const fileResponse = await fetch(fileUrl);
+      
+      if (!fileResponse.ok) {
+        throw new Error(`File fetch error! status: ${fileResponse.status}`);
+      }
+      
+      return {
+        response: fileResponse,
+        filename: downloadInfo.filename,
+        contentType: downloadInfo.content_type
+      };
+    } catch (error) {
+      console.error('Error downloading student file:', error);
+      throw error;
+    }
+  },
+
   async testAiConnection() {
     const response = await fetch(`${API_URL}/ai/test/`, {
       method: 'GET',

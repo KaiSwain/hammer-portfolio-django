@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'storages',  # For S3 file storage
     'hammer_backendapi',
 ]
 
@@ -125,8 +126,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # File Upload Settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB for all file types
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB for all file types
+
+# Student File Upload Settings
+STUDENT_FILE_MAX_SIZE = 100 * 1024 * 1024  # 100MB
+STUDENT_FILE_ALLOWED_TYPES = ['*']  # All file types allowed (except dangerous ones)
 
 # Session Settings
 SESSION_COOKIE_AGE = 86400  # 24 hours

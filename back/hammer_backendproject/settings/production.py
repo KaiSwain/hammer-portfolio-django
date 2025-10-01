@@ -5,12 +5,22 @@ Settings for production deployment with security enabled.
 Uses environment variables from the deployment platform.
 """
 
+import sys
+import os
 from decouple import config
 from .base import *
 import dj_database_url
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
+
+# Check if we're in build mode (collectstatic, migrations, etc.)
+IS_BUILD_TIME = any([
+    'collectstatic' in sys.argv,
+    'migrate' in sys.argv,
+    'makemigrations' in sys.argv,
+    os.getenv('DJANGO_BUILD_MODE') == 'true'
+])
 
 # Production allowed hosts configuration
 ALLOWED_HOSTS_STR = config(
@@ -35,6 +45,14 @@ CORS_ALLOW_ALL_ORIGINS = False  # Security: Only allow specified origins
 # Database configuration for production
 def get_database_config():
     """Get database configuration, with fallback options"""
+    # During build time, use dummy database config
+    if IS_BUILD_TIME:
+        print("[SETTINGS] Build mode detected - using dummy database config")
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    
     database_url = config('DATABASE_URL', default=None)
     
     if database_url:

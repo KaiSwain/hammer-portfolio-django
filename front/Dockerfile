@@ -10,6 +10,10 @@ RUN npm ci --only=production
 # Copy source code
 COPY . .
 
+# Accept build-time environment variables
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build the application
 RUN npm run build
 
@@ -37,5 +41,7 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application with shell wrapper to avoid cd issues
+WORKDIR /app
+USER nextjs
+CMD ["/bin/sh", "-c", "echo 'Starting Next.js server...' && node server.js"]

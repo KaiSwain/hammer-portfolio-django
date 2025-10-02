@@ -79,7 +79,7 @@ def generate_portfolio_certificate(request):
 
 
 # ===============================
-# 2. NCCER (Page 4)
+# 2. NCCER (Page 3)
 # ===============================
 @csrf_exempt
 def generate_nccer_certificate(request):
@@ -110,14 +110,14 @@ def generate_nccer_certificate(request):
 
         generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
-            TEMPLATE_PATH, 4, fields, "nccer_certificate.pdf"
+            TEMPLATE_PATH, 3, fields, "nccer_certificate.pdf"
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
 
 # ===============================
-# 3. OSHA (Page 5)
+# 3. OSHA (Page 4)
 # ===============================
 @csrf_exempt
 def generate_osha_certificate(request):
@@ -149,7 +149,7 @@ def generate_osha_certificate(request):
 
         generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
-            TEMPLATE_PATH, 5, fields, "osha_certificate.pdf"
+            TEMPLATE_PATH, 4, fields, "osha_certificate.pdf"
         )
 
     except Exception as e:
@@ -157,7 +157,7 @@ def generate_osha_certificate(request):
 
 
 # ===============================
-# 4. HammerMath (Page 6)
+# 4. HammerMath (Page 5)
 # ===============================
 @csrf_exempt
 def generate_hammermath_certificate(request):
@@ -188,14 +188,14 @@ def generate_hammermath_certificate(request):
 
         generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
-            TEMPLATE_PATH, 6, fields, "hammermath_certificate.pdf"
+            TEMPLATE_PATH, 5, fields, "hammermath_certificate.pdf"
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
 
 # ===============================
-# 5. Employability (Page 7)
+# 5. Employability (Page 6)
 # ===============================
 @csrf_exempt
 def generate_employability_certificate(request):
@@ -226,14 +226,14 @@ def generate_employability_certificate(request):
 
         generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
-            TEMPLATE_PATH, 7, fields, "employability_certificate.pdf"
+            TEMPLATE_PATH, 6, fields, "employability_certificate.pdf"
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
 
 # ===============================
-# 6. Workforce Development (Page 8)
+# 6. Workforce Development (Page 7)
 # ===============================
 @csrf_exempt
 def generate_workforce_certificate(request):
@@ -264,7 +264,7 @@ def generate_workforce_certificate(request):
 
         generate_certificate_pdf = _get_pdf_generator()
         return generate_certificate_pdf(
-            TEMPLATE_PATH, 8, fields, "workforce_certificate.pdf"
+            TEMPLATE_PATH, 7, fields, "workforce_certificate.pdf"
         )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)

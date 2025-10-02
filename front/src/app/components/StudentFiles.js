@@ -131,22 +131,9 @@ export default function StudentFiles({ studentId, studentName = "Student" }) {
   const handleFileDownload = async (fileId, fileName) => {
     try {
       const downloadData = await apiService.downloadStudentFile(fileId);
-      const blob = await downloadData.response.blob();
       
-      // Use the filename from the API response for accuracy
-      const actualFileName = downloadData.filename || fileName;
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = actualFileName;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      console.log(`File downloaded: ${actualFileName}`);
+      // The API service now handles the download directly
+      console.log(`File download initiated: ${downloadData.filename || fileName}`);
     } catch (err) {
       console.error("File download error:", err);
       setError("Failed to download file");

@@ -344,16 +344,20 @@ export const apiService = {
       const downloadInfo = await response.json();
       console.log('Download info:', downloadInfo);
       
-      // Now fetch the actual file using the download_url
-      const fileUrl = `${API_BASE_URL}${downloadInfo.download_url}`;
-      const fileResponse = await fetch(fileUrl);
+      // Direct download using browser navigation (bypasses CORS)
+      const fileUrl = downloadInfo.download_url;
       
-      if (!fileResponse.ok) {
-        throw new Error(`File fetch error! status: ${fileResponse.status}`);
-      }
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = downloadInfo.filename;
+      link.target = '_blank'; // Open in new tab as fallback
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       return {
-        response: fileResponse,
+        success: true,
         filename: downloadInfo.filename,
         contentType: downloadInfo.content_type
       };

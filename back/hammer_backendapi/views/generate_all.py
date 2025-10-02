@@ -37,30 +37,36 @@ def generate_all_certificates(request):
         sixteen_text = (student.get("sixteen_types_assessment") or {}).get("type_name") or "N/A"
         enneagram_text = (student.get("enneagram_result") or {}).get("result_name") or "N/A"
 
-        # Build the map of page -> fields (1-based page numbers!)
+        # Build the map of page -> fields (1-based page numbers for generate_master_pdf_pymupdf!)
+        # Individual certificates use 0-based indexing: Portfolio(2), NCCER(3), OSHA(4), HammerMath(5), Employability(6), Workforce(7)
+        # But generate_master_pdf_pymupdf expects 1-based, so we add 1 to each page number
         page_fields_map = {
-    3: [  # Employment Portfolio Overview (was index=2)
+    1: [   
+        {"text": full_name,      "coords": (300, 450), "align": "center", "fontsize": 40, "color": (0,0,0)},
+        
+    ],
+    3: [  # Employment Portfolio Overview (Individual cert uses page 2, so 2+1=3 for 1-based) 
         {"text": disc_text,      "coords": (510, 560), "align": "center", "fontsize": 8, "color": (0,0,0)},
         {"text": sixteen_text,   "coords": (510, 620), "align": "center", "fontsize": 8, "color": (0,0,0)},
         {"text": enneagram_text, "coords": (510, 675), "align": "center", "fontsize": 8, "color": (0,0,0)},
     ],
-    5: [  # NCCER (was index=4)
+    4: [  # NCCER (Individual cert uses page 3, so 3+1=4 for 1-based)
         {"text": full_name, "coords": (390, 275), "align": "center", "fontsize": 30, "color": (1,0,0)},
         {"text": end_date,  "coords": (392, 440), "align": "center", "fontsize": 14, "color": (0,0,0)},
     ],
-    6: [  # OSHA (was index=5)
+    5: [  # OSHA (Individual cert uses page 4, so 4+1=5 for 1-based)
         {"text": full_name, "coords": (450, 290), "align": "center", "fontsize": 40, "color": (1,0,0)},
         {"text": osha_date, "coords": (650, 470), "align": "center", "fontsize": 14, "color": (0,0,0)},
     ],
-    7: [  # HammerMath (was index=6)
+    6: [  # HammerMath (Individual cert uses page 5, so 5+1=6 for 1-based)
         {"text": full_name, "coords": (385, 375), "align": "center", "fontsize": 30, "color": (1,0,0)},
         {"text": end_date,  "coords": (560, 545), "align": "center", "fontsize": 14, "color": (0,0,0)},
     ],
-    8: [  # Employability (was index=7)
+    7: [  # Employability (Individual cert uses page 6, so 6+1=7 for 1-based)
         {"text": full_name, "coords": (390, 350), "align": "center", "fontsize": 30, "color": (1,0,0)},
         {"text": end_date,  "coords": (555, 500), "align": "center", "fontsize": 14, "color": (0,0,0)},
     ],
-    9: [  # Workforce (was index=8)
+    8: [  # Workforce (Individual cert uses page 7, so 7+1=8 for 1-based)
         {"text": full_name, "coords": (450, 360), "align": "center", "fontsize": 40, "color": (1,0,0)},
         {"text": end_date,  "coords": (550, 475), "align": "center", "fontsize": 14, "color": (0,0,0)},
     ],

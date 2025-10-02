@@ -121,14 +121,49 @@ def delete_student_file(request, file_id):
 def download_student_file(request, file_id):
     """Get download URL for a student file"""
     try:
+        from django.conf import settings
+        import boto3
+        from botocore.exceptions import ClientError
+        
         student_file = get_object_or_404(StudentFile, pk=file_id)
         
         # Log the download for audit purposes
         logger.info(f"File download requested: {student_file.original_name} (ID: {file_id}) by user {request.user}")
         
-        # Return download information (URL will be signed for S3 in production)
+        # Generate download URL based on storage backend
+        download_url = student_file.file.url
+        
+        # If using S3 with private files, generate a signed URL
+        if hasattr(settings, 'USE_S3') and settings.USE_S3 and hasattr(settings, 'AWS_DEFAULT_ACL') and settings.AWS_DEFAULT_ACL == 'private':
+            try:
+                # Create S3 client
+                s3_client = boto3.client(
+                    's3',
+                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                    region_name=settings.AWS_S3_REGION_NAME
+                )
+                
+                # Generate signed URL (valid for 1 hour)
+                download_url = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={
+                        'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
+                        'Key': student_file.file.name
+                    },
+                    ExpiresIn=3600  # 1 hour
+                )
+                
+                logger.info(f"Generated signed URL for file {file_id}")
+                
+            except ClientError as e:
+                logger.error(f"Error generating signed URL for file {file_id}: {e}")
+                # Fall back to regular URL if signing fails
+                pass
+        
+        # Return download information
         return Response({
-            'download_url': student_file.file.url,
+            'download_url': download_url,
             'filename': student_file.original_name,
             'content_type': student_file.content_type,
             'size_bytes': student_file.size_bytes

@@ -5,6 +5,7 @@ from rest_framework.authtoken.models import Token
 from .models import (
     Teacher,
     Student,
+    StudentFile,
     Organization,
     GenderIdentity,
     DiscAssessment,
@@ -226,4 +227,54 @@ class RegionAdmin(admin.ModelAdmin):
     def teacher_count(self, obj):
         return obj.teacher_set.count()
     teacher_count.short_description = "Teachers"
+
+
+# -------------------------
+# Student File Admin
+# -------------------------
+@admin.register(StudentFile)
+class StudentFileAdmin(admin.ModelAdmin):
+    list_display = ('original_name', 'student_name', 'content_type', 'file_size_display', 'uploaded_at', 'uploaded_by')
+    list_filter = ('content_type', 'uploaded_at', 'student__teacher__organization')
+    search_fields = ('original_name', 'student__full_name', 'student__email')
+    readonly_fields = ('uploaded_at', 'file_size_display', 'file_extension', 'size_bytes')
+    ordering = ('-uploaded_at',)
+    
+    fieldsets = (
+        ('File Information', {
+            'fields': ('original_name', 'file', 'content_type')
+        }),
+        ('Student Association', {
+            'fields': ('student', 'uploaded_by')
+        }),
+        ('File Details', {
+            'fields': ('size_bytes', 'file_size_display', 'file_extension', 'uploaded_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def student_name(self, obj):
+        return obj.student.full_name
+    student_name.short_description = "Student"
+    student_name.admin_order_field = 'student__full_name'
+    
+    def file_size_display(self, obj):
+        """Display file size in human readable format"""
+        if obj.size_bytes:
+            size = obj.size_bytes
+            if size < 1024:
+                return f"{size} bytes"
+            elif size < 1024 * 1024:
+                return f"{size / 1024:.1f} KB"
+            else:
+                return f"{size / (1024 * 1024):.1f} MB"
+        return "Unknown"
+    file_size_display.short_description = "File Size"
+    
+    def file_extension(self, obj):
+        """Get file extension from original_name"""
+        if obj.original_name:
+            return obj.original_name.split('.')[-1].upper() if '.' in obj.original_name else 'None'
+        return 'None'
+    file_extension.short_description = "Extension"
     

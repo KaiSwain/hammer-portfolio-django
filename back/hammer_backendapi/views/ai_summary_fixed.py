@@ -122,10 +122,11 @@ INSTR = (
     
     "CRITICAL OUTPUT FORMAT: Return ONLY valid JSON: {\"html\": \"your_html_content_here\"}\n\n"
     
-    "GENDER HANDLING:\n"
-    "- If gender is 'Female' or 'Woman': Use she/her pronouns consistently\n"
-    "- If gender is 'Male' or 'Man': Use he/him pronouns consistently\n" 
-    "- If gender is null/None/empty or other: Use they/them pronouns consistently\n\n"
+    "GENDER-NEUTRAL LANGUAGE:\n"
+    "- ALWAYS use they/them pronouns consistently throughout the summary\n"
+    "- Use gender-neutral language in all descriptions (e.g., 'this individual', 'this person', 'the student')\n"
+    "- Focus on professional qualities and avoid any gender assumptions\n"
+    "- Example: 'They demonstrate strong leadership' instead of 'She/he demonstrates strong leadership'\n\n"
     
     "REQUIRED HTML STRUCTURE (use EXACTLY this format):\n"
     "<p>[Student Name] demonstrates a [DISC type] communication style, [16 Types personality], and [Enneagram type] motivation pattern, bringing [key workplace strength] to every professional environment through strong commitment to quality, collaboration, and continuous professional development.</p>\n\n"
@@ -192,7 +193,7 @@ def build_meta(student) -> Dict[str, Any]:
         "sixteen": getattr(student.sixteen_types_assessment, "type_name", None),
         "enneagram": getattr(student.enneagram_result, "result_name", None),
         "osha": getattr(student.osha_type, "name", None),
-        "gender": getattr(student.gender_identity, "gender", None),
+        # Removed gender field - we now use gender-neutral language for all summaries
     }
 
 def _safe_extract_html(response_content: str) -> str:

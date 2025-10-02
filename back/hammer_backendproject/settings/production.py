@@ -14,10 +14,9 @@ import dj_database_url
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# Check if we're in build mode (collectstatic, migrations, etc.)
+# Check if we're in build mode (collectstatic only, not migrations)
 IS_BUILD_TIME = any([
     'collectstatic' in sys.argv,
-    'migrate' in sys.argv,
     'makemigrations' in sys.argv,
     os.getenv('DJANGO_BUILD_MODE') == 'true'
 ])
@@ -25,12 +24,16 @@ IS_BUILD_TIME = any([
 # Production allowed hosts configuration
 ALLOWED_HOSTS_STR = config(
     'ALLOWED_HOSTS', 
-    default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,*.railway.app,*.ondigitalocean.app')
+    default=config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,web-production-f42cb.up.railway.app')
 )
 ALLOWED_HOSTS = [s.strip() for s in ALLOWED_HOSTS_STR.split(',')] if ALLOWED_HOSTS_STR else ['*']
 
-# Add wildcard for hosting platforms
-ALLOWED_HOSTS.extend(['*.railway.app', '*.ondigitalocean.app'])
+# Add specific Railway domains and wildcards for hosting platforms
+ALLOWED_HOSTS.extend([
+    'web-production-f42cb.up.railway.app',  # Current test deployment
+    '.railway.app',  # Django wildcard syntax (note the leading dot)
+    '.ondigitalocean.app'
+])
 
 # CORS settings for production (restrictive)
 CORS_ALLOWED_ORIGINS_STR = config(
@@ -62,7 +65,6 @@ def get_database_config():
             'CONN_HEALTH_CHECKS': True,
             'OPTIONS': {
                 'connect_timeout': 10,
-                'options': '-c default_transaction_isolation=read_committed'
             }
         })
         return db_config
@@ -77,7 +79,6 @@ def get_database_config():
             'PORT': config('POSTGRES_PORT', default='5432'),
             'OPTIONS': {
                 'connect_timeout': 10,
-                'options': '-c default_transaction_isolation=read_committed'
             }
         }
 
@@ -181,15 +182,40 @@ if USE_S3:
     AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
     AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='hammer-portfolio-files')
     AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    
+    # Use custom domain from env var if provided, otherwise construct it
+    AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN', default=f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com')
+    # Remove https:// if present in the domain
+    if AWS_S3_CUSTOM_DOMAIN.startswith('https://'):
+        AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN.replace('https://', '')
+    
     AWS_DEFAULT_ACL = 'private'  # Student files should be private
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
     
-    # Use S3 for media files
+    # Use S3 for media files (Django 4.2+ style)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "region_name": AWS_S3_REGION_NAME,
+                "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+                "default_acl": AWS_DEFAULT_ACL,
+                "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    
+    # Fallback for older Django versions
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
     
     print("[SETTINGS] Using S3 for file storage")
 else:

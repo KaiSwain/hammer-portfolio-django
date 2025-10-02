@@ -24,7 +24,7 @@ RUN apt-get update \
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# Copy project directly to /app (since deploying from back directory)
 COPY . /app/
 
 # Create logs directory
@@ -44,5 +44,5 @@ USER django
 # Expose port
 EXPOSE 8000
 
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "hammer_backendproject.wsgi:application"]
+# Run gunicorn with Railway's PORT environment variable
+CMD sh -c "python manage.py migrate --noinput && gunicorn hammer_backendproject.wsgi --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120"

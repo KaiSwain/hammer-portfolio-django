@@ -134,13 +134,27 @@ import os
 import uuid
 
 def student_file_path(instance, filename):
-    """Generate file path: students/{student_id}/{uuid}.{ext}"""
+    """Generate file path: students/{student_name}/{student_name}_{filename}"""
+    import re
+    
     base, ext = os.path.splitext(filename)
     ext = ext.lower()
-    safe_filename = f"{uuid.uuid4().hex}{ext}"
+    
+    # Get student name and clean it for filesystem safety
+    student_name = instance.student.full_name
+    # Replace spaces with underscores and remove special characters
+    safe_student_name = re.sub(r'[^\w\s-]', '', student_name)
+    safe_student_name = re.sub(r'[-\s]+', '_', safe_student_name)
+    
+    # Clean the original filename
+    safe_base = re.sub(r'[^\w\s-]', '', base)
+    safe_base = re.sub(r'[-\s]+', '_', safe_base)
+    
+    # Create descriptive filename: StudentName_OriginalFilename.ext
+    safe_filename = f"{safe_student_name}_{safe_base}{ext}"
     
     # Create path for student files
-    path = f"students/{instance.student.id}/{safe_filename}"
+    path = f"students/{safe_student_name}/{safe_filename}"
     return path
 
 class StudentFile(models.Model):

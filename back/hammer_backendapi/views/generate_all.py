@@ -42,7 +42,7 @@ def generate_all_certificates(request):
         # But generate_master_pdf_pymupdf expects 1-based, so we add 1 to each page number
         page_fields_map = {
     1: [   
-        {"text": full_name,      "coords": (300, 450), "align": "center", "fontsize": 40, "color": (0,0,0)},
+        {"text": full_name,      "coords": (300, 450), "align": "center", "fontsize": 40, "color": (1,0,0)},
         
     ],
     3: [  # Employment Portfolio Overview (Individual cert uses page 2, so 2+1=3 for 1-based) 

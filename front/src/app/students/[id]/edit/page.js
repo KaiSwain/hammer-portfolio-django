@@ -701,7 +701,7 @@ export default function EditStudentPage() {
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div className="text-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-800">Test Scores</h2>
+                  <h2 className="text-xl font-semibold text-gray-800">HammerMath Test Scores</h2>
                   <p className="text-gray-600 text-sm">Update pre and post assessment scores (0-14 scale)</p>
                 </div>
 

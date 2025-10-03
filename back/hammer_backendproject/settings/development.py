@@ -42,20 +42,39 @@ CORS_ALLOW_ALL_ORIGINS = True  # Only for development
 CORS_ALLOW_CREDENTIALS = True
 
 # Database configuration for development
-# Using Docker PostgreSQL for better production parity
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('POSTGRES_DB', default='hammer_dev'),
-        'USER': config('POSTGRES_USER', default='hammer_dev_user'),
-        'PASSWORD': config('POSTGRES_PASSWORD', default='hammer_dev_password'),
-        'HOST': config('POSTGRES_HOST', default='localhost'),
-        'PORT': config('POSTGRES_PORT', default='5433'),
+# Use production database if DATABASE_URL is provided, otherwise use local PostgreSQL
+import dj_database_url
+
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Use production database (Railway PostgreSQL)
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
+    DATABASES['default'].update({
+        'CONN_HEALTH_CHECKS': True,
         'OPTIONS': {
             'connect_timeout': 10,
-        },
+        }
+    })
+    print("[SETTINGS] Development mode using production database (Railway)")
+else:
+    # Use local PostgreSQL for development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('POSTGRES_DB', default='hammer_dev'),
+            'USER': config('POSTGRES_USER', default='hammer_dev_user'),
+            'PASSWORD': config('POSTGRES_PASSWORD', default='hammer_dev_password'),
+            'HOST': config('POSTGRES_HOST', default='localhost'),
+            'PORT': config('POSTGRES_PORT', default='5433'),
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
+        }
     }
-}
+    print("[SETTINGS] Development mode using local PostgreSQL database")
 
 # Fallback to SQLite if you prefer (uncomment the lines below and comment the PostgreSQL config above)
 # DATABASES = {
@@ -110,6 +129,60 @@ LOGGING = {
     },
 }
 
+# AWS S3 Configuration for File Storage (same as production)
+# Check if AWS credentials are provided to use S3, otherwise fallback to local storage
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
+USE_S3 = bool(AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
+
+if USE_S3:
+    # AWS S3 Settings for media files (identical to production)
+    AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='myhammerfiles')
+    AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
+    
+    # Use custom domain from env var if provided, otherwise construct it
+    AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN', default=f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com')
+    # Remove https:// if present in the domain
+    if AWS_S3_CUSTOM_DOMAIN.startswith('https://'):
+        AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN.replace('https://', '')
+    
+    AWS_DEFAULT_ACL = 'private'  # Student files should be private
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Use S3 for media files (Django 4.2+ style)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "region_name": AWS_S3_REGION_NAME,
+                "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+                "default_acl": AWS_DEFAULT_ACL,
+                "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+                "querystring_auth": True,  # Generate signed URLs for private files
+                "querystring_expire": 3600,  # URLs expire in 1 hour
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    
+    # Fallback for older Django versions
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    
+    print("[SETTINGS] Development mode using S3 for file storage")
+else:
+    # Use local storage as fallback
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    print("[SETTINGS] Development mode using local file storage (no S3 credentials found)")
+
 # Security settings (disabled for development)
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
@@ -119,3 +192,55 @@ SECURE_CONTENT_TYPE_NOSNIFF = False
 
 # Email backend for development (console output)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# AWS S3 Configuration for Development
+# Use S3 if AWS credentials are provided in .env.development
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
+USE_S3 = AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+
+if USE_S3:
+    # AWS S3 Settings for media files (same as production)
+    AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='myhammerfiles')
+    AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
+    
+    # Use custom domain from env var if provided, otherwise construct it
+    AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN', default=f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com')
+    # Remove https:// if present in the domain
+    if AWS_S3_CUSTOM_DOMAIN.startswith('https://'):
+        AWS_S3_CUSTOM_DOMAIN = AWS_S3_CUSTOM_DOMAIN.replace('https://', '')
+    
+    AWS_DEFAULT_ACL = 'private'  # Student files should be private
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Use S3 for media files (Django 4.2+ style)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "region_name": AWS_S3_REGION_NAME,
+                "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+                "default_acl": AWS_DEFAULT_ACL,
+                "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    
+    # Fallback for older Django versions
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    
+    print("[SETTINGS] Development: Using S3 for file storage")
+else:
+    # Use local storage as fallback
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    print("[SETTINGS] Development: Using local file storage")
